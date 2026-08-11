@@ -1,0 +1,21 @@
+NATHALIE — Web para enviar por WhatsApp
+=======================================
+
+Contenido:
+- index.html : landing de presentación (se abre primero)
+- demo.html  : demo interactiva completa (prototipo funcional)
+
+La landing enlaza a la demo con los botones "Probar la demo →".
+
+Cómo publicarlo (GitHub Pages, cuenta Dokan46):
+1. Crear repositorio nuevo (p. ej. "nathalie")
+2. Subir los dos archivos HTML por la web de GitHub
+3. Settings → Pages → Deploy from branch → main → raíz
+4. En ~1 minuto: https://dokan46.github.io/nathalie
+5. Pegar ese enlace en WhatsApp
+
+Notas:
+- La demo funciona entera en el navegador, sin servidor.
+- Los datos son ficticios y viven solo en la sesión: al recargar
+  se restauran. Perfecto para que Nathalie trastee sin miedo.
+- Acceso de la demo: pulsar "Entrar" (credenciales ya rellenas).

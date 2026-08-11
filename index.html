@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NATHALIE · Tu estudio, sin Excel</title>
+<meta name="description" content="Una herramienta a medida para gestionar tus clientes y ver su evolución de un vistazo. Adiós al Excel.">
+<meta property="og:title" content="NATHALIE · Tu estudio, sin Excel">
+<meta property="og:description" content="Una herramienta a medida para gestionar tus clientes y ver su evolución de un vistazo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo: #0C1310;
+    --superficie: rgba(21,32,27,0.72);
+    --superficie-solida: #131E1A;
+    --borde: rgba(236,242,239,0.09);
+    --borde-fuerte: rgba(236,242,239,0.16);
+    --texto: #ECF2EF;
+    --gris: #8FA69D;
+    --menta: #4FD1A5;
+    --menta-viva: #72E3BE;
+    --lila: #A78BFA;
+    --ambar: #E8B44C;
+    --grad: linear-gradient(120deg, #4FD1A5, #A78BFA);
+    --grad-boton: linear-gradient(120deg, #3EC59A, #35A986);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--texto);
+    background:
+      radial-gradient(900px 520px at 90% -10%, rgba(79,209,165,0.14), transparent 55%),
+      radial-gradient(760px 520px at -10% 30%, rgba(167,139,250,0.11), transparent 55%),
+      radial-gradient(700px 420px at 60% 105%, rgba(79,209,165,0.07), transparent 60%),
+      var(--fondo);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+  h1, h2, h3, .num, .marca { font-family: 'Bricolage Grotesque', 'Inter', sans-serif; }
+  .contenedor { max-width: 960px; margin: 0 auto; padding: 0 22px; }
+
+  /* ---------- Cabecera ---------- */
+  header { padding: 26px 0 8px; }
+  .marca-fila { display: flex; align-items: center; gap: 12px; }
+  .monograma {
+    width: 44px; height: 44px; border-radius: 15px; background: var(--grad);
+    color: #0C1310; font-size: 23px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    box-shadow: 0 6px 20px rgba(79,209,165,0.35);
+  }
+  .marca { font-weight: 800; letter-spacing: 0.15em; font-size: 15px; }
+  .marca-sub { color: var(--gris); font-size: 11px; letter-spacing: 0.08em; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 52px 0 40px; text-align: left; }
+  .hero .etiqueta {
+    display: inline-block; font-size: 12.5px; font-weight: 600; letter-spacing: 0.06em;
+    color: var(--menta-viva); background: rgba(79,209,165,0.12); border: 1px solid rgba(79,209,165,0.28);
+    border-radius: 999px; padding: 6px 14px; margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-size: clamp(34px, 8vw, 54px); font-weight: 800; line-height: 1.06; letter-spacing: -0.02em;
+  }
+  .hero h1 .grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { color: var(--gris); font-size: 17px; margin-top: 18px; max-width: 540px; }
+  .hero .cta { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; text-decoration: none; border-radius: 14px; padding: 13px 22px;
+    font-size: 15px; font-weight: 700; transition: filter 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primario { background: var(--grad-boton); color: #06110D; box-shadow: 0 8px 24px rgba(79,209,165,0.30); }
+  .btn-primario:hover { filter: brightness(1.1); }
+  .btn-secundario { background: rgba(236,242,239,0.06); border: 1px solid var(--borde-fuerte); color: var(--texto); }
+
+  /* ---------- Móvil mockup ---------- */
+  .telefonos { display: flex; gap: 18px; justify-content: center; padding: 30px 0 10px; flex-wrap: wrap; }
+  .telefono {
+    width: 250px; background: var(--superficie-solida); border: 1px solid var(--borde-fuerte);
+    border-radius: 30px; padding: 14px 12px 18px; box-shadow: 0 30px 70px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+  }
+  .telefono.alzado { transform: translateY(-16px) rotate(-1.5deg); }
+  .telefono.bajado { transform: translateY(10px) rotate(1.5deg); }
+  .muesca { width: 74px; height: 5px; border-radius: 5px; background: rgba(236,242,239,0.14); margin: 0 auto 14px; }
+  .pantalla { display: flex; flex-direction: column; gap: 10px; }
+  .mini-hero {
+    background: radial-gradient(160px 90px at 90% 0%, rgba(167,139,250,0.25), transparent 60%),
+                radial-gradient(180px 110px at 5% 110%, rgba(79,209,165,0.22), transparent 60%),
+                #101915;
+    border: 1px solid var(--borde-fuerte); border-radius: 16px; padding: 13px 14px;
+  }
+  .mini-hero .saludo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 17px;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .mini-hero .fecha { color: var(--gris); font-size: 10.5px; margin-top: 2px; }
+  .mini-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mini-kpi { background: var(--superficie); border: 1px solid var(--borde); border-radius: 13px; padding: 9px 11px; position: relative; overflow: hidden; }
+  .mini-kpi::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--grad); }
+  .mini-kpi .num { font-size: 19px; font-weight: 800; }
+  .mini-kpi .etq { font-size: 9.5px; color: var(--gris); }
+  .mini-fila { display: flex; align-items: center; gap: 8px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 13px; padding: 8px 10px; }
+  .mini-avatar { width: 26px; height: 26px; border-radius: 46% 54% 52% 48% / 52% 46% 54% 48%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .mini-fila .nombre { font-size: 11.5px; font-weight: 600; }
+  .mini-fila .meta { font-size: 9.5px; color: var(--gris); }
+  .mini-chip { margin-left: auto; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(232,180,76,0.15); color: var(--ambar); white-space: nowrap; }
+  .mini-chip.verde { background: rgba(79,209,165,0.15); color: var(--menta-viva); }
+  .mini-titulo { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gris); padding: 2px 2px 0; }
+  .mini-grafica { background: var(--superficie); border: 1px solid var(--borde); border-radius: 13px; padding: 10px; }
+  .mini-grafica svg { display: block; width: 100%; height: auto; }
+  .mini-deltas { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .mini-delta { font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(79,209,165,0.15); color: var(--menta-viva); }
+  .mini-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mini-foto { border-radius: 12px; overflow: hidden; border: 1px solid var(--borde-fuerte); position: relative; }
+  .mini-foto .cuerpo { aspect-ratio: 3/4; display: flex; align-items: flex-end; justify-content: center; }
+  .mini-foto .silueta { width: 46%; height: 82%; border-radius: 50% 50% 20% 20% / 34% 34% 12% 12%; }
+  .mini-foto .pie { position: absolute; bottom: 6px; left: 6px; font-size: 8.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(6,11,9,0.7); }
+  .mini-plan { background: var(--superficie); border: 1px solid var(--borde); border-radius: 13px; padding: 10px 12px; }
+  .mini-plan .freq { font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .mini-plan .freq span { font-size: 13px; }
+  .mini-plan .etq { font-size: 9px; color: var(--gris); text-transform: uppercase; letter-spacing: 0.07em; }
+  .mini-ejercicio { display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; padding: 6px 2px; border-top: 1px solid var(--borde); }
+  .mini-ejercicio:first-of-type { margin-top: 8px; }
+
+  /* ---------- Secciones ---------- */
+  section { padding: 46px 0; }
+  .cab-seccion { margin-bottom: 26px; }
+  .cab-seccion .kicker { color: var(--menta-viva); font-size: 12.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+  .cab-seccion h2 { font-size: clamp(24px, 5vw, 32px); font-weight: 800; letter-spacing: -0.02em; margin-top: 8px; }
+  .cab-seccion p { color: var(--gris); margin-top: 10px; max-width: 560px; }
+
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .tarjeta {
+    background: var(--superficie); backdrop-filter: blur(14px);
+    border: 1px solid var(--borde); border-radius: 20px; padding: 22px;
+  }
+  .tarjeta .icono { font-size: 26px; margin-bottom: 12px; display: block; }
+  .tarjeta h3 { font-size: 16.5px; font-weight: 700; margin-bottom: 7px; }
+  .tarjeta p { color: var(--gris); font-size: 14px; }
+
+  /* Antes / después demo */
+  .comparador { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 480px; margin: 0 auto; }
+  .comp-col { text-align: center; }
+  .comp-marco { border-radius: 18px; overflow: hidden; border: 1px solid var(--borde-fuerte); aspect-ratio: 3/4; display: flex; align-items: flex-end; justify-content: center; }
+  .comp-marco .silueta { border-radius: 50% 50% 20% 20% / 34% 34% 12% 12%; height: 84%; }
+  .comp-etq { margin-top: 10px; font-size: 13px; font-weight: 700; }
+  .comp-etq .fecha { display: block; font-weight: 400; color: var(--gris); font-size: 12px; }
+
+  /* Pasos */
+  .pasos { display: grid; gap: 12px; counter-reset: paso; }
+  .paso { display: flex; gap: 16px; align-items: flex-start; background: var(--superficie); border: 1px solid var(--borde); border-radius: 18px; padding: 18px 20px; }
+  .paso::before {
+    counter-increment: paso; content: counter(paso);
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 19px;
+    width: 38px; height: 38px; border-radius: 13px; flex-shrink: 0;
+    background: var(--grad); color: #06110D; display: flex; align-items: center; justify-content: center;
+  }
+  .paso h3 { font-size: 15.5px; }
+  .paso p { color: var(--gris); font-size: 13.5px; margin-top: 3px; }
+
+  /* Privacidad */
+  .privacidad { display: flex; gap: 14px; align-items: flex-start; background: rgba(79,209,165,0.07); border: 1px solid rgba(79,209,165,0.22); border-radius: 18px; padding: 18px 20px; }
+  .privacidad .icono { font-size: 24px; }
+  .privacidad p { color: #C7D4CE; font-size: 14px; }
+  .privacidad strong { color: var(--texto); }
+
+  /* CTA final */
+  .final { text-align: center; padding: 60px 0 40px; }
+  .final h2 { font-size: clamp(26px, 6vw, 36px); font-weight: 800; letter-spacing: -0.02em; }
+  .final h2 .grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .final p { color: var(--gris); margin: 14px auto 26px; max-width: 480px; }
+  footer { text-align: center; color: var(--gris); font-size: 12.5px; padding: 10px 0 34px; }
+  footer .nota { opacity: 0.7; margin-top: 6px; }
+
+  /* Animación de aparición */
+  .revela { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .revela.visible { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .revela { opacity: 1; transform: none; transition: none; }
+    html { scroll-behavior: auto; }
+  }
+  @media (max-width: 640px) {
+    .telefono.alzado, .telefono.bajado { transform: none; }
+    .telefono { width: min(270px, 100%); }
+  }
+</style>
+</head>
+<body>
+
+<header class="contenedor">
+  <div class="marca-fila">
+    <div class="monograma">N</div>
+    <div>
+      <div class="marca">NATHALIE</div>
+      <div class="marca-sub">estudio de entrenamiento personal</div>
+    </div>
+  </div>
+</header>
+
+<div class="contenedor hero">
+  <span class="etiqueta">✦ Propuesta de herramienta a tu medida</span>
+  <h1>Todos tus clientes.<br>Todo su progreso.<br><span class="grad">Sin Excel.</span></h1>
+  <p>Imagina abrir una sola pantalla y ver quién necesita revisión, cómo evoluciona cada cliente y sus fotos de antes y después. Eso es lo que te propongo construir.</p>
+  <div class="cta">
+    <a class="btn btn-primario" href="demo.html">Probar la demo →</a>
+    <a class="btn btn-secundario" href="#como-seria">Ver un adelanto ↓</a>
+  </div>
+</div>
+
+<div class="telefonos contenedor" id="como-seria">
+  <!-- Teléfono 1: dashboard -->
+  <div class="telefono alzado revela">
+    <div class="muesca"></div>
+    <div class="pantalla">
+      <div class="mini-hero">
+        <div class="saludo">Hola, Nathalie</div>
+        <div class="fecha">martes, 11 de agosto</div>
+      </div>
+      <div class="mini-kpis">
+        <div class="mini-kpi"><div class="num">14</div><div class="etq">Clientes activos</div></div>
+        <div class="mini-kpi"><div class="num">2</div><div class="etq">Revisiones pendientes</div></div>
+      </div>
+      <div class="mini-titulo">Necesitan revisión</div>
+      <div class="mini-fila">
+        <div class="mini-avatar" style="background:linear-gradient(135deg,#E0784A,#8a4426)">LG</div>
+        <div><div class="nombre">Laura García</div><div class="meta">Última revisión hace 34 días</div></div>
+        <span class="mini-chip">34 días</span>
+      </div>
+      <div class="mini-fila">
+        <div class="mini-avatar" style="background:linear-gradient(135deg,#7B8EE8,#3d4a8f)">MV</div>
+        <div><div class="nombre">María Vega</div><div class="meta">Última revisión hace 31 días</div></div>
+        <span class="mini-chip">31 días</span>
+      </div>
+      <div class="mini-fila">
+        <div class="mini-avatar" style="background:linear-gradient(135deg,#A98BF0,#5f3fa8)">JE</div>
+        <div><div class="nombre">Jon Etxeberria</div><div class="meta">Revisión al día</div></div>
+        <span class="mini-chip verde">✓</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teléfono 2: evolución -->
+  <div class="telefono revela">
+    <div class="muesca"></div>
+    <div class="pantalla">
+      <div class="mini-fila" style="border:none;background:none;padding:4px 2px">
+        <div class="mini-avatar" style="background:linear-gradient(135deg,#E0784A,#8a4426);width:30px;height:30px;font-size:11px">LG</div>
+        <div><div class="nombre" style="font-size:13px">Laura García</div><div class="meta">5 meses en el programa</div></div>
+      </div>
+      <div class="mini-titulo">Evolución · Peso</div>
+      <div class="mini-grafica">
+        <svg viewBox="0 0 220 110" role="img" aria-label="Gráfica de evolución del peso">
+          <defs>
+            <linearGradient id="rel" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4FD1A5" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#4FD1A5" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="lin" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#4FD1A5"/><stop offset="100%" stop-color="#A78BFA"/>
+            </linearGradient>
+          </defs>
+          <path d="M10,28 L52,42 L94,50 L136,66 L178,78 L210,88 L210,105 L10,105 Z" fill="url(#rel)"/>
+          <path d="M10,28 L52,42 L94,50 L136,66 L178,78 L210,88" fill="none" stroke="url(#lin)" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="10" cy="28" r="3.5" fill="#4FD1A5"/><circle cx="94" cy="50" r="3.5" fill="#4FD1A5"/>
+          <circle cx="210" cy="88" r="4.5" fill="#A78BFA"/>
+          <text x="10" y="16" font-size="10" fill="#8FA69D">72,4 kg</text>
+          <text x="168" y="72" font-size="10" fill="#72E3BE" font-weight="700">68,7 kg</text>
+        </svg>
+        <div class="mini-deltas">
+          <span class="mini-delta">▾ 3,7 kg</span>
+          <span class="mini-delta">▾ 5,1 %</span>
+          <span class="mini-delta" style="background:rgba(167,139,250,0.16);color:#C6B2FC">cintura −5 cm</span>
+        </div>
+      </div>
+      <div class="mini-titulo">Fotos · antes y después</div>
+      <div class="mini-fotos">
+        <div class="mini-foto"><div class="cuerpo" style="background:#EFE7DC"><div class="silueta" style="background:#2E5F57;width:52%"></div></div><span class="pie">Marzo</span></div>
+        <div class="mini-foto"><div class="cuerpo" style="background:#DCEAE3"><div class="silueta" style="background:#2E5F57;width:44%"></div></div><span class="pie" style="color:#72E3BE">Agosto</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teléfono 3: entrenamiento -->
+  <div class="telefono bajado revela">
+    <div class="muesca"></div>
+    <div class="pantalla">
+      <div class="mini-titulo">Plan de entrenamiento</div>
+      <div class="mini-plan">
+        <div style="display:flex;gap:18px;align-items:flex-end">
+          <div><div class="freq">3<span>×</span></div><div class="etq">días / semana</div></div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:700">Fuerza + metabólico</div><div class="etq">L · X · V</div></div>
+        </div>
+        <div class="mini-ejercicio"><span>Sentadilla goblet</span><span class="mini-chip verde">4 × 10-12</span></div>
+        <div class="mini-ejercicio"><span>Hip thrust</span><span class="mini-chip verde">4 × 12</span></div>
+        <div class="mini-ejercicio"><span>Remo mancuerna</span><span class="mini-chip verde">3 × 10</span></div>
+        <div class="mini-ejercicio"><span>Plancha</span><span class="mini-chip verde">3 × 40 s</span></div>
+      </div>
+      <div class="mini-titulo">Última revisión</div>
+      <div class="mini-fila" style="align-items:flex-start">
+        <div style="font-size:11px;color:var(--ambar);letter-spacing:1px">★★★★☆</div>
+      </div>
+      <div class="mini-fila" style="display:block;font-size:10.5px;color:#C7D4CE;line-height:1.5">
+        "Excelente mes. Bajada constante sin perder fuerza. Mantener plan dos semanas más."
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="contenedor">
+  <div class="cab-seccion revela">
+    <div class="kicker">Qué podrás hacer</div>
+    <h2>Todo lo que hoy vive en el Excel, en su sitio</h2>
+    <p>Cada módulo responde a algo que ya haces cada semana — solo que más rápido, más visual y sin miedo a perder datos.</p>
+  </div>
+  <div class="rejilla">
+    <div class="tarjeta revela"><span class="icono">👥</span><h3>Tus clientes, de un vistazo</h3><p>Ficha completa de cada persona: objetivo, nivel, lesiones, localidad, centro y cuánto tiempo lleva contigo. Con buscador y filtros.</p></div>
+    <div class="tarjeta revela"><span class="icono">📏</span><h3>Mediciones sin fórmulas</h3><p>Peso, % graso, cintura, cadera… solo los datos que tengas ese día. Todo queda en el historial, nada se sobrescribe.</p></div>
+    <div class="tarjeta revela"><span class="icono">📈</span><h3>Evolución que se ve</h3><p>Gráficas de cualquier métrica entre dos fechas: valor inicial, actual y cuánto ha cambiado. Perfectas para enseñar en la revisión.</p></div>
+    <div class="tarjeta revela"><span class="icono">📷</span><h3>Antes y después</h3><p>Fotos de control privadas por cliente. Eliges dos fechas y las comparas lado a lado o con un deslizador.</p></div>
+    <div class="tarjeta revela"><span class="icono">🏋️</span><h3>Plan de entrenamiento</h3><p>Frecuencia semanal, días, enfoque y lista de ejercicios con series y repeticiones de cada cliente.</p></div>
+    <div class="tarjeta revela"><span class="icono">🗓️</span><h3>Revisiones y notas</h3><p>Check-ins con valoración y comentarios. La app te avisa de quién lleva más de 30 días sin revisión.</p></div>
+  </div>
+</section>
+
+<section class="contenedor">
+  <div class="cab-seccion revela">
+    <div class="kicker">El momento estrella</div>
+    <h2>Su progreso, en 10 segundos</h2>
+    <p>Selecciona dos fechas y enséñale a tu cliente lo que ha conseguido. Nada motiva más.</p>
+  </div>
+  <div class="comparador revela">
+    <div class="comp-col">
+      <div class="comp-marco" style="background:#EFE7DC"><div class="silueta" style="background:#2E5F57;width:54%"></div></div>
+      <div class="comp-etq">Antes<span class="fecha">14 marzo · 72,4 kg</span></div>
+    </div>
+    <div class="comp-col">
+      <div class="comp-marco" style="background:#DCEAE3"><div class="silueta" style="background:#2E5F57;width:45%"></div></div>
+      <div class="comp-etq" style="color:var(--menta-viva)">Después<span class="fecha">6 agosto · 68,7 kg</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="contenedor">
+  <div class="cab-seccion revela">
+    <div class="kicker">Tu nueva rutina</div>
+    <h2>Así sería tu día a día</h2>
+  </div>
+  <div class="pasos">
+    <div class="paso revela"><div><h3>Abres la app (móvil u ordenador)</h3><p>El panel te dice quién necesita revisión y qué ha pasado últimamente. Sin buscar entre pestañas de Excel.</p></div></div>
+    <div class="paso revela"><div><h3>En la revisión, todo en una pantalla</h3><p>Apuntas las medidas del día, subes las fotos y escribes tu comentario. Dos minutos y listo.</p></div></div>
+    <div class="paso revela"><div><h3>Le enseñas su evolución</h3><p>Gráfica de progreso y comparación de fotos delante del cliente. El "guau" está garantizado.</p></div></div>
+  </div>
+</section>
+
+<section class="contenedor">
+  <div class="privacidad revela">
+    <span class="icono">🔒</span>
+    <p><strong>Privacidad primero.</strong> Los datos y las fotografías de tus clientes son solo tuyos: acceso con contraseña, fotos privadas (nunca públicas en internet) y copias de seguridad. Y para empezar, <strong>tu Excel actual se importa automáticamente</strong> — no hay que copiar nada a mano.</p>
+  </div>
+</section>
+
+<div class="contenedor final">
+  <h2>¿Le damos una vuelta <span class="grad">juntos</span>?</h2>
+  <p>Entra en la demo y toca todo: abre fichas, mira gráficas, compara fotos, añade un cliente de prueba. Después cuéntame qué añadirías, qué sobra y qué es imprescindible para ti.</p>
+  <a class="btn btn-primario" href="demo.html">Probar la demo →</a>
+</div>
+
+<footer class="contenedor">
+  <div>NATHALIE · herramienta a medida</div>
+  <div class="nota">Las pantallas mostradas son un diseño ilustrativo del prototipo, con datos ficticios.</div>
+</footer>
+
+<script>
+  // Animación de aparición al hacer scroll
+  const observador = new IntersectionObserver((entradas) => {
+    entradas.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('visible'); observador.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.revela').forEach((el) => observador.observe(el));
+</script>
+</body>
+</html>
