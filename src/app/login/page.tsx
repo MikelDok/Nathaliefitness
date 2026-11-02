@@ -1,0 +1,68 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { getSupabase } from "@/lib/supabase";
+
+export default function Login() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function submit() {
+    const sb = getSupabase();
+    if (!sb) { router.replace("/"); return; } // modo demo: entra directo
+    setLoading(true); setError(null);
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error || !data.user) {
+      setLoading(false);
+      setError("Correo o contraseña incorrectos. Revisa e inténtalo de nuevo.");
+      return;
+    }
+    const { data: profile } = await sb
+      .from("profiles").select("role").eq("id", data.user.id).maybeSingle();
+    setLoading(false);
+    router.replace(profile?.role === "coach" ? "/coach" : "/");
+  }
+
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
+      <div className="flex justify-center">
+        <Image
+          src="/logo.png"
+          alt="Nathalie · Personal Trainer"
+          width={230}
+          height={230}
+          priority
+          className="h-auto w-56"
+        />
+      </div>
+      <p className="eyebrow mt-6 text-center tracking-[0.22em]">
+        Entrena · Avanza · Disfruta
+      </p>
+      <div className="mt-8 space-y-3">
+        <input
+          type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+          placeholder="Correo electrónico" autoComplete="email"
+          className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
+        />
+        <input
+          type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+          placeholder="Contraseña" autoComplete="current-password"
+          className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
+        />
+        {error && <p className="text-xs text-red-400">{error}</p>}
+        <button
+          onClick={submit} disabled={loading}
+          className="w-full rounded-full bg-accent py-3.5 font-semibold text-accent-ink disabled:opacity-60"
+        >
+          {loading ? "Entrando…" : "Iniciar sesión"}
+        </button>
+        <button className="w-full py-2 text-xs text-muted">He olvidado mi contraseña</button>
+      </div>
+    </main>
+  );
+}
