@@ -1,12 +1,13 @@
 import Link from "next/link";
 import ProfileName from "@/components/ProfileName";
 import LogoutButton from "@/components/LogoutButton";
+import ChangePassword from "@/components/ChangePassword";
 import { demo } from "@/lib/demo-data";
 import { requireAuth } from "@/lib/config";
 
-const items = [
+// Entradas sin pantalla todavía: se muestran como texto, no como botones.
+const soon = [
   "Datos y objetivos",
-  "Check-in semanal",
   "Preferencias alimentarias",
   "Notificaciones",
   "Privacidad y mis datos",
@@ -50,12 +51,25 @@ export default function Perfil() {
             <span aria-hidden className="text-muted">›</span>
           </Link>
         </li>
-        {items.map((label) => (
-          <li key={label}>
-            <button className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
-              {label}
-              <span aria-hidden className="text-muted">›</span>
-            </button>
+        <li>
+          <Link href="/checkin"
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
+            Check-in semanal
+            <span aria-hidden className="text-muted">›</span>
+          </Link>
+        </li>
+        {requireAuth && (
+          <li>
+            <ChangePassword />
+          </li>
+        )}
+        {soon.map((label) => (
+          <li key={label}
+            className="flex items-center justify-between px-4 py-3.5 text-sm text-muted">
+            {label}
+            <span className="rounded-full bg-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+              Próximamente
+            </span>
           </li>
         ))}
         {requireAuth && (

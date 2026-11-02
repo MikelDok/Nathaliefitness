@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
+import { homePath } from "@/lib/auth";
 
 export default function Login() {
   const router = useRouter();
@@ -22,10 +24,9 @@ export default function Login() {
       setError("Correo o contraseña incorrectos. Revisa e inténtalo de nuevo.");
       return;
     }
-    const { data: profile } = await sb
-      .from("profiles").select("role").eq("id", data.user.id).maybeSingle();
+    const home = await homePath(sb, data.user.id);
     setLoading(false);
-    router.replace(profile?.role === "coach" ? "/coach" : "/");
+    router.replace(home);
   }
 
   return (
@@ -61,7 +62,9 @@ export default function Login() {
         >
           {loading ? "Entrando…" : "Iniciar sesión"}
         </button>
-        <button className="w-full py-2 text-xs text-muted">He olvidado mi contraseña</button>
+        <Link href="/recuperar" className="block w-full py-2 text-center text-xs text-muted">
+          He olvidado mi contraseña
+        </Link>
       </div>
     </main>
   );
