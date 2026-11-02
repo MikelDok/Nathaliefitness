@@ -65,6 +65,9 @@ export default function Login() {
         <Link href="/recuperar" className="block w-full py-2 text-center text-xs text-muted">
           He olvidado mi contraseña
         </Link>
+        <Link href="/privacidad" className="block w-full text-center text-[11px] text-muted/70">
+          Privacidad
+        </Link>
       </div>
     </main>
   );

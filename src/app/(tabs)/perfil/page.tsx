@@ -10,7 +10,6 @@ const soon = [
   "Datos y objetivos",
   "Preferencias alimentarias",
   "Notificaciones",
-  "Privacidad y mis datos",
 ];
 
 export default function Perfil() {
@@ -72,6 +71,13 @@ export default function Perfil() {
             </span>
           </li>
         ))}
+        <li>
+          <Link href="/privacidad"
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
+            Privacidad y mis datos
+            <span aria-hidden className="text-muted">›</span>
+          </Link>
+        </li>
         {requireAuth && (
           <li>
             <LogoutButton />
