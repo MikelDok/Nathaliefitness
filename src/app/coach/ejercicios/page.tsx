@@ -77,7 +77,7 @@ export default function Ejercicios() {
             className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2.5 text-sm"
           />
         </div>
-        {msg && <p className="text-xs text-red-300">{msg}</p>}
+        {msg && <p className="text-xs text-danger">{msg}</p>}
         <button onClick={add} className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink">
           Añadir a la biblioteca
         </button>

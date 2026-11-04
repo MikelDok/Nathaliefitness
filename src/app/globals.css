@@ -11,9 +11,33 @@
   --color-accent: #dfa08f;      /* rose gold */
   --color-accent-ink: #2b1410;
   --color-ok: #7fc29b;
+  --color-danger: #f5a3a3;     /* errores y avisos de riesgo */
+}
+
+/* Tema claro: mismos tokens redefinidos; todo lo que usa var(--color-…) cambia solo.
+   Contraste AA (≥ 4,5:1) de ink, muted, accent, ok y danger sobre bg, surface y raised. */
+html[data-theme="light"] {
+  --color-bg: #faf7f5;          /* blanco roto cálido */
+  --color-surface: #ffffff;
+  --color-raised: #f1ebe8;
+  --color-line: #e2d8d4;
+  --color-ink: #2a2326;         /* grafito */
+  --color-muted: #6e6266;
+  --color-accent: #96503f;      /* rose gold profundo: el claro original no llega a AA sobre blanco */
+  --color-accent-ink: #ffffff;
+  --color-ok: #2a7349;
+  --color-danger: #b3261e;
+  color-scheme: light;
 }
 
 html { background: var(--color-bg); color-scheme: dark; }
+
+/* Logo (PNG con fondo negro, sin transparencia): en claro se muestra como
+   una placa oscura redondeada, igual que un icono de app. */
+html[data-theme="light"] .logo-mark {
+  border-radius: 1.75rem;
+  box-shadow: 0 10px 30px -12px rgb(42 35 38 / 0.45);
+}
 
 body {
   background: var(--color-bg);

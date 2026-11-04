@@ -33,7 +33,7 @@ export default function Recuperar() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
       <div className="flex justify-center">
         <Image src="/logo.png" alt="NEA FITNESS" width={230} height={230}
-          priority className="h-auto w-40" />
+          priority className="logo-mark h-auto w-40" />
       </div>
       <p className="eyebrow mt-6 text-center">Recuperar contraseña</p>
 
@@ -56,7 +56,7 @@ export default function Recuperar() {
             placeholder="Correo electrónico" autoComplete="email" required
             className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
           />
-          {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
+          {error && <p role="alert" className="text-xs text-danger">{error}</p>}
           <button
             type="submit" disabled={loading}
             className="w-full rounded-full bg-accent py-3.5 font-semibold text-accent-ink disabled:opacity-60"

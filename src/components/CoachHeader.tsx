@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 const nav = [
   { href: "/coach", label: "Resumen" },
@@ -46,12 +47,15 @@ export default function CoachHeader() {
           <p className="eyebrow">Panel · NEA FITNESS</p>
           <p className="text-sm font-semibold">{name || "\u00A0"}</p>
         </div>
-        <button
-          onClick={signOut}
-          className="rounded-full border border-line px-3 py-1.5 text-xs text-muted"
-        >
-          Cerrar sesión
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeSwitcher compact />
+          <button
+            onClick={signOut}
+            className="rounded-full border border-line px-3 py-1.5 text-xs text-muted"
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </div>
       <nav className="mx-auto flex max-w-4xl gap-1 overflow-x-auto px-4 pb-2" aria-label="Secciones del panel">
         {nav.map((n) => {

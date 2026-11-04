@@ -186,7 +186,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
         <textarea value={note} onChange={(e) => setNote(e.target.value)}
           placeholder="Añade una nota para tu entrenadora" rows={2}
           className="mt-3 w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
-        {err && <p className="mt-2 text-xs text-red-300">{err}</p>}
+        {err && <p className="mt-2 text-xs text-danger">{err}</p>}
         <button onClick={save} disabled={saving || saved}
           className="mt-3 w-full rounded-full bg-accent py-3 font-semibold text-accent-ink disabled:opacity-60">
           {saved ? "Guardado ✓" : saving ? "Guardando…" : "Guardar registro"}

@@ -52,7 +52,7 @@ export default function BarcodeScanner({
           <video ref={videoRef} className="aspect-[3/4] w-full object-cover" />
         </div>
         {error ? (
-          <p className="mt-3 text-center text-xs text-red-300">{error}</p>
+          <p className="mt-3 text-center text-xs text-danger">{error}</p>
         ) : (
           <p className="mt-3 text-center text-xs text-muted">
             Apunta al código de barras del producto.

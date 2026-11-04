@@ -134,7 +134,7 @@ export default function Checkin() {
         <textarea value={comments} onChange={(e) => setComments(e.target.value)}
           placeholder="Comentarios para tu entrenadora (opcional)" rows={2}
           className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
-        {err && <p className="text-xs text-red-300">{err}</p>}
+        {err && <p className="text-xs text-danger">{err}</p>}
         <button onClick={submit} disabled={saving}
           className="w-full rounded-full bg-accent py-3 font-semibold text-accent-ink disabled:opacity-60">
           {saving ? "Enviando…" : submitted ? "Actualizar check-in" : "Enviar check-in"}

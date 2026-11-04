@@ -52,11 +52,6 @@ export const demo = {
     waistStart: 88,
     waistNow: 79,
     photos: { before: "oct. 2025", after: "jul. 2026" },
-    prs: [
-      { name: "Prensa", kg: 120 },
-      { name: "Sentadilla (barra)", kg: 62.5 },
-      { name: "Peso muerto", kg: 85 },
-    ],
   },
 
   checkin: { pendingWeek: "Semana del 10 de agosto" },

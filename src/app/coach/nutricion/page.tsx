@@ -71,7 +71,7 @@ export default function NutricionCoach() {
               className="figure rounded-lg border border-line bg-bg px-2 py-2.5 text-center text-sm" />
           ))}
         </div>
-        {msg && <p className="text-xs text-red-300">{msg}</p>}
+        {msg && <p className="text-xs text-danger">{msg}</p>}
         <button onClick={create} className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink">
           Crear y abrir editor
         </button>

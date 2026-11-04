@@ -219,7 +219,7 @@ export default function Appointments({ clientId, asCoach }: { clientId: string; 
         </div>
       )}
 
-      {err && <p className="mt-3 rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">{err}</p>}
+      {err && <p className="mt-3 rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs text-danger">{err}</p>}
 
       {loading ? (
         <p className="mt-3 text-sm text-muted">Cargando citas…</p>

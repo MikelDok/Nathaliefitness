@@ -67,7 +67,7 @@ export default function Habitos() {
             Añadir
           </button>
         </div>
-        {msg && <p className="text-xs text-red-300">{msg}</p>}
+        {msg && <p className="text-xs text-danger">{msg}</p>}
         <p className="text-[11px] text-muted">Tu entrenadora también puede asignarte hábitos; aparecerán aquí.</p>
       </section>
 

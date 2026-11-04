@@ -151,7 +151,7 @@ export default function Chat({ clientId }: { clientId: string }) {
         )}
       </div>
 
-      {err && <p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">{err}</p>}
+      {err && <p className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs text-danger">{err}</p>}
 
       <div className="flex items-center gap-2">
         <label className={`shrink-0 cursor-pointer rounded-full border border-line px-3 py-2.5 text-sm ${busy ? "opacity-60" : ""}`}>

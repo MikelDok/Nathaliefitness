@@ -127,7 +127,7 @@ export default function WaterCard() {
           </div>
         </div>
       )}
-      {err && <p className="mt-2 text-xs text-red-300">{err}</p>}
+      {err && <p className="mt-2 text-xs text-danger">{err}</p>}
     </section>
   );
 }

@@ -99,7 +99,7 @@ export default function Sugerencias() {
           {busy ? "Enviando…" : "Enviar"}
         </button>
         {msg && (
-          <p role="status" className={`text-center text-sm ${msg.ok ? "text-ok" : "text-red-300"}`}>{msg.text}</p>
+          <p role="status" className={`text-center text-sm ${msg.ok ? "text-ok" : "text-danger"}`}>{msg.text}</p>
         )}
         {!requireAuth && <p className="text-center text-[11px] text-muted">Modo demo: no se guarda.</p>}
       </section>

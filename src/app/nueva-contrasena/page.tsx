@@ -62,7 +62,7 @@ export default function NuevaContrasena() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
       <div className="flex justify-center">
         <Image src="/logo.png" alt="NEA FITNESS" width={230} height={230}
-          priority className="h-auto w-40" />
+          priority className="logo-mark h-auto w-40" />
       </div>
       <p className="eyebrow mt-6 text-center">Nueva contraseña</p>
 

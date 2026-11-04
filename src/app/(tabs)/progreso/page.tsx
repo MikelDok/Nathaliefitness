@@ -7,7 +7,7 @@ import { demo, demoMeasurements, demoLoadLogs } from "@/lib/demo-data";
 import TrendPanel from "@/components/progress/TrendPanel";
 import MeasurePanel from "@/components/progress/MeasurePanel";
 import LoadsPanel from "@/components/progress/LoadsPanel";
-import { seriesOf, type LoadLog } from "@/lib/progress";
+import { seriesOf, fmtNum, fmtDelta, type LoadLog } from "@/lib/progress";
 import {
   FIELDS, MAIN_FIELDS, EXTRA_FIELDS, SELECT, formatDate,
   type Measurement,
@@ -149,7 +149,6 @@ export default function Progreso() {
   // ---------- Demo ----------
   if (!requireAuth) {
     const p = demo.progress;
-    const lost = (p.weightStart - p.weightNow).toFixed(1);
     const dm = demoMeasurements();
     return (
       <main className="space-y-5">
@@ -157,11 +156,11 @@ export default function Progreso() {
         <section className="card p-5">
           <div className="flex items-baseline justify-between">
             <p className="eyebrow">Peso</p>
-            <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold">−{lost} kg</span>
+            <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold">{fmtDelta(p.weightNow - p.weightStart)} kg</span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="figure text-4xl">{p.weightNow}</span>
-            <span className="text-sm text-muted">kg · desde {p.weightStart} kg</span>
+            <span className="figure text-4xl">{fmtNum(p.weightNow)}</span>
+            <span className="text-sm text-muted">kg · desde {fmtNum(p.weightStart)} kg</span>
           </div>
           <TrendPanel points={seriesOf(dm, "weight_kg")} name="Peso" unit="kg" emptyText="" />
         </section>
@@ -196,15 +195,15 @@ export default function Progreso() {
           <p className="eyebrow">Peso</p>
           {diff != null && diff !== 0 && (
             <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold">
-              {diff < 0 ? "−" : "+"}{Math.abs(diff).toFixed(1)} kg
+              {fmtDelta(diff)} kg
             </span>
           )}
         </div>
         {last != null ? (
           <>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="figure text-4xl">{last}</span>
-              <span className="text-sm text-muted">kg{first != null && first !== last ? ` · desde ${first} kg` : ""}</span>
+              <span className="figure text-4xl">{fmtNum(last)}</span>
+              <span className="text-sm text-muted">kg{first != null && first !== last ? ` · desde ${fmtNum(first)} kg` : ""}</span>
             </div>
             <TrendPanel points={seriesOf(measurements, "weight_kg")} name="Peso" unit="kg" emptyText="" />
           </>
@@ -274,7 +273,7 @@ export default function Progreso() {
                   <p className="text-sm font-medium">{formatDate(m.measured_at)}</p>
                   {vals.length > 0 && (
                     <p className="mt-0.5 text-xs text-muted">
-                      {vals.map((f) => `${f.label} ${m[f.key]} ${f.unit}`).join(" · ")}
+                      {vals.map((f) => `${f.label} ${fmtNum(m[f.key]!)} ${f.unit}`).join(" · ")}
                     </p>
                   )}
                   {m.note && <p className="mt-1 text-xs">📝 {m.note}</p>}
@@ -326,7 +325,7 @@ export default function Progreso() {
               className="mt-0.5 accent-[var(--color-accent)]" />
             Compartir esta foto con mi entrenadora para que vea mi progreso.
           </label>
-          {photoMsg && <p className="text-xs text-red-300">{photoMsg}</p>}
+          {photoMsg && <p className="text-xs text-danger">{photoMsg}</p>}
           <button onClick={uploadPhoto} disabled={busy}
             className="w-full rounded-full bg-accent py-2.5 text-sm font-semibold text-accent-ink disabled:opacity-60">
             {busy ? "Subiendo…" : "Subir foto"}

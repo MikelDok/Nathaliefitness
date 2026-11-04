@@ -174,7 +174,7 @@ export default function FaqsCoach() {
                         <button onClick={() => startEdit(f)}
                           className="rounded-full border border-line px-3 py-1 text-xs text-muted">Editar</button>
                         <button onClick={() => remove(f)}
-                          className={`rounded-full border px-3 py-1 text-xs ${confirmDel === f.id ? "border-red-400 text-red-300" : "border-line text-muted"}`}>
+                          className={`rounded-full border px-3 py-1 text-xs ${confirmDel === f.id ? "border-danger text-danger" : "border-line text-muted"}`}>
                           {confirmDel === f.id ? "¿Borrar? Toca otra vez" : "Borrar"}
                         </button>
                       </div>

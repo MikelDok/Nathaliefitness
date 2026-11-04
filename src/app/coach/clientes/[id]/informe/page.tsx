@@ -9,6 +9,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
 import { SELECT, usedFields, formatDate, type Measurement } from "@/lib/measurements";
+import { fmtNum, fmtDelta } from "@/lib/progress";
 
 type Profile = { full_name: string };
 
@@ -75,13 +76,13 @@ export default function InformeProgreso({ params }: { params: Promise<{ id: stri
             {last != null && (
               <section className="mt-5 flex flex-wrap gap-6 text-sm">
                 {first != null && (
-                  <p><span className="text-[#666666]">Peso inicial:</span> <b>{first} kg</b></p>
+                  <p><span className="text-[#666666]">Peso inicial:</span> <b>{fmtNum(first)} kg</b></p>
                 )}
-                <p><span className="text-[#666666]">Peso actual:</span> <b>{last} kg</b></p>
+                <p><span className="text-[#666666]">Peso actual:</span> <b>{fmtNum(last)} kg</b></p>
                 {diff != null && diff !== 0 && (
                   <p>
                     <span className="text-[#666666]">Diferencia:</span>{" "}
-                    <b>{diff < 0 ? "−" : "+"}{Math.abs(diff).toFixed(1)} kg</b>
+                    <b>{fmtDelta(diff)} kg</b>
                   </p>
                 )}
               </section>
@@ -106,7 +107,7 @@ export default function InformeProgreso({ params }: { params: Promise<{ id: stri
                       <td className="whitespace-nowrap py-1.5 pr-3">{formatDate(m.measured_at)}</td>
                       {cols.map((f) => (
                         <td key={f.key} className="py-1.5 pr-3 text-right tabular-nums">
-                          {m[f.key] ?? "—"}
+                          {m[f.key] != null ? fmtNum(m[f.key]!) : "—"}
                         </td>
                       ))}
                     </tr>

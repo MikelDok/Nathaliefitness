@@ -13,7 +13,7 @@ export default function LogoutButton() {
   return (
     <button
       onClick={signOut}
-      className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm text-red-400"
+      className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm text-danger"
     >
       Cerrar sesión
       <span aria-hidden className="text-muted">›</span>

@@ -69,7 +69,7 @@ export default function PasswordForm({
         autoComplete="new-password" required
         className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
       />
-      {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
       <button
         type="submit" disabled={loading}
         className="w-full rounded-full bg-accent py-3.5 font-semibold text-accent-ink disabled:opacity-60"

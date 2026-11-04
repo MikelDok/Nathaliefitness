@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import ThemeSync from "@/components/ThemeSync";
+import { THEME_COLOR, THEME_SCRIPT } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "NEA FITNESS",
@@ -10,7 +12,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f0c0d",
+  // oscuro por defecto; el script de tema lo cambia si el activo es el claro
+  themeColor: THEME_COLOR.dark,
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -18,8 +21,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body className="min-h-dvh">{children}</body>
+    // data-theme lo corrige el script antes del primer pintado: el DOM manda
+    <html lang="es" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
+      <body className="min-h-dvh">
+        <ThemeSync />
+        {children}
+      </body>
     </html>
   );
 }

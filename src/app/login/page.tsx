@@ -38,7 +38,7 @@ export default function Login() {
           width={230}
           height={230}
           priority
-          className="h-auto w-56"
+          className="logo-mark h-auto w-56"
         />
       </div>
       <p className="eyebrow mt-6 text-center tracking-[0.22em]">
@@ -55,7 +55,7 @@ export default function Login() {
           placeholder="Contraseña" autoComplete="current-password"
           className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
         />
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-danger">{error}</p>}
         <button
           onClick={submit} disabled={loading}
           className="w-full rounded-full bg-accent py-3.5 font-semibold text-accent-ink disabled:opacity-60"

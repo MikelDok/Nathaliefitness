@@ -125,7 +125,7 @@ export default function CoachDashboard() {
   };
 
   const dot = (tone: string) =>
-    tone === "ok" ? "bg-ok" : tone === "mid" ? "bg-accent" : tone === "risk" ? "bg-red-400" : "bg-line";
+    tone === "ok" ? "bg-ok" : tone === "mid" ? "bg-accent" : tone === "risk" ? "bg-danger" : "bg-line";
 
   return (
     <main className="space-y-6">
@@ -140,16 +140,16 @@ export default function CoachDashboard() {
           <p className="eyebrow">Check-ins</p>
           <p className="figure mt-1 text-3xl">{loading ? "—" : checkins.length}</p>
         </div>
-        <div className={`card p-4 ${atRisk.length > 0 ? "border-red-400/40" : ""}`}>
+        <div className={`card p-4 ${atRisk.length > 0 ? "border-danger/40" : ""}`}>
           <p className="eyebrow">En riesgo</p>
-          <p className={`figure mt-1 text-3xl ${atRisk.length > 0 ? "text-red-400" : ""}`}>
+          <p className={`figure mt-1 text-3xl ${atRisk.length > 0 ? "text-danger" : ""}`}>
             {loading ? "—" : atRisk.length}
           </p>
         </div>
       </div>
 
       {err && (
-        <p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">{err}</p>
+        <p className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs text-danger">{err}</p>
       )}
 
       {!loading && unreadEntries.length > 0 && (
@@ -207,8 +207,8 @@ export default function CoachDashboard() {
       )}
 
       {!loading && atRisk.length > 0 && (
-        <section className="rounded-2xl border border-red-400/40 bg-red-500/5 p-4">
-          <p className="eyebrow text-red-400">⚠ Necesitan un empujón</p>
+        <section className="rounded-2xl border border-danger/40 bg-danger/5 p-4">
+          <p className="eyebrow text-danger">⚠ Necesitan un empujón</p>
           <ul className="mt-3 divide-y divide-line/50">
             {atRisk.map((c) => {
               const a = activity[c.id];
@@ -216,7 +216,7 @@ export default function CoachDashboard() {
                 <li key={c.id}>
                   <Link href={`/coach/clientes/${c.id}`} className="flex items-center justify-between py-3">
                     <span className="text-sm font-medium">{c.full_name}</span>
-                    <span className="text-xs text-red-300">
+                    <span className="text-xs text-danger">
                       {a?.days != null ? `${a.days} días sin actividad ›` : "nunca ha registrado nada ›"}
                     </span>
                   </Link>
@@ -259,7 +259,7 @@ export default function CoachDashboard() {
                         </span>
                       )}
                     </span>
-                    <span className={`shrink-0 text-xs ${lab.tone === "risk" ? "text-red-300" : "text-muted"}`}>
+                    <span className={`shrink-0 text-xs ${lab.tone === "risk" ? "text-danger" : "text-muted"}`}>
                       {lab.text} ›
                     </span>
                   </Link>

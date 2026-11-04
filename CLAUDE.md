@@ -19,7 +19,9 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
   tiene cambios respecto a lo conocido; consulta `node_modules/next/dist/docs/`.
 - **React 19.2.8**, **TypeScript 5**, **Tailwind CSS 4** (tokens en
   `src/app/globals.css`: `bg`, `surface`, `raised`, `line`, `ink`, `muted`,
-  `accent` rose gold, `accent-ink`, `ok`; clases `.card`, `.eyebrow`, `.figure`).
+  `accent` rose gold, `accent-ink`, `ok`, `danger`; clases `.card`, `.eyebrow`,
+  `.figure`, `.logo-mark`). **Usa siempre tokens**, nunca colores sueltos
+  (`red-300`, hex…): el tema claro solo redefine esos tokens.
 - **Supabase** (`@supabase/supabase-js` 2.112): Auth email+contraseña,
   Postgres con RLS, Storage, Realtime (chat).
 - Otras: `@zxing/browser` (código de barras → Open Food Facts), `xlsx`
@@ -97,6 +99,16 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
 - Ejercicios ocultos: `program_exercises.hidden`. Es presentación, no
   seguridad: la RLS no cambia (los registros antiguos conservan el nombre) y
   Entreno filtra `hidden = false`. Duplicar y copiar semana lo copian.
+- Tema claro/oscuro: `html[data-theme="light"]` redefine los tokens en
+  `globals.css` (contraste AA comprobado; acento claro `#96503f`). Preferencia
+  en `localStorage["nea:theme"]` (`dark` por defecto | `light` | `system`),
+  lógica en `src/lib/theme.ts`. Script inline en el `<head>` del layout raíz
+  (sin parpadeo) + `ThemeSync` (reaplica tras el remontaje de Strict Mode en
+  desarrollo y sigue a "Sistema"). Selector `ThemeSwitcher` en Perfil y en la
+  cabecera del panel. El informe imprimible es papel blanco en ambos temas
+  (sus hex son intencionados); el manifest se queda oscuro.
+- Cifras decimales en pantalla con coma: `fmtNum` / `fmtDelta` de
+  `src/lib/progress.ts` (el Excel conserva números).
 - Gráficas de progreso: cálculos puros en `src/lib/progress.ts` (rangos,
   series por medida, kg máximo por sesión y ejercicio, formatos es-ES; las
   fechas `YYYY-MM-DD` se leen como locales con `parseDay`). Gráfica base
@@ -170,6 +182,7 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
   selector, cargas por ejercicio con marcas personales) y versión compacta de
   peso y cargas en la ficha. Datos de demo con fechas relativas a hoy
   (`demoMeasurements`, `demoLoadLogs`).
+- Tema claro/oscuro/sistema (clienta y panel) y decimales con coma.
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los

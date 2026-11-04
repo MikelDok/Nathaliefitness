@@ -8,7 +8,7 @@ import {
 } from "@/lib/measurements";
 import TrendPanel from "@/components/progress/TrendPanel";
 import LoadsPanel from "@/components/progress/LoadsPanel";
-import { seriesOf, type LoadLog } from "@/lib/progress";
+import { seriesOf, fmtNum, fmtDelta, type LoadLog } from "@/lib/progress";
 
 type Profile = {
   id: string; full_name: string; created_at: string; goals: string | null; water_goal_ml: number | null;
@@ -218,11 +218,11 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
           className="mt-2 w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
         <p className="mt-1 text-[11px] text-muted">
           Solo tú ves estas notas. Se guardan al salir del campo.
-          {notesMsg && <span className={notesMsg.startsWith("No") ? " text-red-300" : " text-ok"}> {notesMsg}</span>}
+          {notesMsg && <span className={notesMsg.startsWith("No") ? " text-danger" : " text-ok"}> {notesMsg}</span>}
         </p>
       </section>
 
-      {msg && <p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">{msg}</p>}
+      {msg && <p className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs text-danger">{msg}</p>}
 
       <Link href={`/coach/clientes/${id}/agenda`}
         className="card flex items-center justify-between gap-3 p-4">
@@ -290,13 +290,13 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
             return (
               <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 {last != null && (
-                  <p>Peso: <b className="figure">{last} kg</b>
+                  <p>Peso: <b className="figure">{fmtNum(last)} kg</b>
                     {first != null && first !== last && (
-                      <span className="text-muted"> (desde {first} kg, {last - first > 0 ? "+" : "−"}{Math.abs(last - first).toFixed(1)})</span>
+                      <span className="text-muted"> (desde {fmtNum(first)} kg, {fmtDelta(last - first)})</span>
                     )}
                   </p>
                 )}
-                {lastWaist != null && <p>Cintura: <b className="figure">{lastWaist} cm</b></p>}
+                {lastWaist != null && <p>Cintura: <b className="figure">{fmtNum(lastWaist)} cm</b></p>}
                 <p className="text-muted">{measurements.length} mediciones</p>
               </div>
             );
@@ -337,7 +337,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
                       <tr key={m.id} className="border-t border-line">
                         <td className="whitespace-nowrap py-2 pr-4">{formatDate(m.measured_at)}</td>
                         {cols.map((f) => (
-                          <td key={f.key} className="figure py-2 pr-4 text-right">{m[f.key] ?? "—"}</td>
+                          <td key={f.key} className="figure py-2 pr-4 text-right">{m[f.key] != null ? fmtNum(m[f.key]!) : "—"}</td>
                         ))}
                         <td className="min-w-[12rem] py-2 text-muted">{m.note || ""}</td>
                       </tr>
