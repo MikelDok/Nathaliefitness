@@ -82,6 +82,21 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
 - Programa activo: como mucho uno por clienta, vía RPC `set_active_program` (0008).
 - Medidas: definición única en `src/lib/measurements.ts` (formulario, ficha,
   Excel e informe); añadir una medida = tocar ese archivo + una migración.
+- `profiles` tiene **permisos de columna** (0012): la clienta solo puede
+  actualizar `full_name`, `avatar_url`, `goals`, `dietary_prefs` y
+  `water_goal_ml`; nunca `role` ni `coach_id`. Si se añade una columna
+  editable por la clienta, hay que añadirla al `grant update (...)`.
+- Notas privadas de la coach: tabla `client_notes` (solo policy de coach), no
+  columna en `profiles`: los permisos de columna son por rol de Postgres y
+  coach y clienta comparten `authenticated`, así que una columna en su propia
+  fila sería legible por la clienta.
+- Agua: `water_logs` (una fila por clienta y día, `ml`); objetivo en
+  `profiles.water_goal_ml` (2000 por defecto).
+- Ejercicios ocultos: `program_exercises.hidden`. Es presentación, no
+  seguridad: la RLS no cambia (los registros antiguos conservan el nombre) y
+  Entreno filtra `hidden = false`. Duplicar y copiar semana lo copian.
+- Franjas de comida: lista y orden únicos en `src/lib/meals.ts` (`MEAL_SLOTS`,
+  `sortBySlot`), usados por el editor de la coach y la pestaña de la clienta.
 
 ## Migraciones (`supabase/migrations/`)
 Se ejecutan **a mano y en orden** en el SQL Editor de Supabase. Escríbelas
@@ -99,8 +114,9 @@ re-ejecutables (`if not exists`, `drop policy if exists`, `on conflict`).
 | 0009 | Medidas extra + nota por registro |
 | 0010 | Chat (`messages`, Realtime, bucket `chat-media`) |
 | 0011 | Agenda (`appointments`) + `programs.starts_on` / `weekdays` |
+| 0012 | `client_notes`, `water_logs`, `profiles.water_goal_ml` + permisos de columna en `profiles`, `program_exercises.hidden` |
 
-**La siguiente es `0012_…`.**
+**La siguiente es `0013_…`.**
 
 ## Variables de entorno (`.env.local`, y las mismas en Vercel)
 ```
@@ -123,8 +139,13 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
   contraseña desde Perfil.
 - Página `/privacidad` (texto piloto con marcadores `[NOMBRE COMPLETO / CONTACTO]`
   y `[CONTACTO]` que debe rellenar Nathalie).
-- En Perfil, "Datos y objetivos", "Preferencias alimentarias" y "Notificaciones"
-  se muestran como **Próximamente** (texto, no botones).
+- En Perfil, "Datos y objetivos" edita `profiles.goals` (la coach lo ve en la
+  ficha); "Preferencias alimentarias" y "Notificaciones" siguen como
+  **Próximamente** (texto, no botones).
+- Descansos entre series (`rest_seconds`) y temporizador de descanso en el
+  detalle del ejercicio (`src/lib/useRestTimer.ts`, `RestTimer`).
+- Notas privadas de la coach, registro de agua, franja "Picoteo" y ejercicios
+  ocultos (0012).
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los

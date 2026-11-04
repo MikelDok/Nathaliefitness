@@ -12,7 +12,7 @@ type Program = {
 type Exercise = { id: string; name: string; muscle_group: string };
 type Row = {
   id: string; week: number; day: number; position: number; set_scheme: string;
-  set_type: string | null; rest_seconds: number | null; exercise_id: string;
+  set_type: string | null; rest_seconds: number | null; hidden: boolean; exercise_id: string;
 };
 
 /** "" → null (la clienta usará 90 s); si no, segundos enteros ≥ 0. */
@@ -46,7 +46,7 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
     const [{ data: p }, { data: ex }, { data: pe }] = await Promise.all([
       sb.from("programs").select(PLAN_SELECT).eq("id", id).maybeSingle(),
       sb.from("exercises").select("id,name,muscle_group").order("name"),
-      sb.from("program_exercises").select("id,week,day,position,set_scheme,set_type,rest_seconds,exercise_id").eq("program_id", id).order("position"),
+      sb.from("program_exercises").select("id,week,day,position,set_scheme,set_type,rest_seconds,hidden,exercise_id").eq("program_id", id).order("position"),
     ]);
     setProgram(p);
     setStartsOn(p?.starts_on || "");
@@ -107,6 +107,19 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
     setTimeout(() => setRestSaved((cur) => (cur === row.id ? null : cur)), 1500);
   }
 
+  /** Oculta o vuelve a mostrar un ejercicio en la app de la clienta. */
+  async function toggleHidden(row: Row) {
+    const sb = getSupabase();
+    if (!sb) return;
+    const next = !row.hidden;
+    setRows((rs) => rs.map((r) => (r.id === row.id ? { ...r, hidden: next } : r)));
+    const { error } = await sb.from("program_exercises").update({ hidden: next }).eq("id", row.id);
+    if (error) {
+      setRows((rs) => rs.map((r) => (r.id === row.id ? { ...r, hidden: row.hidden } : r)));
+      setMsg("No se pudo cambiar la visibilidad.");
+    }
+  }
+
   /** Ancla el programa al calendario. Sin fecha de inicio, se desancla. */
   async function savePlan() {
     setPlanMsg(null);
@@ -136,7 +149,7 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
       source.map((r) => ({
         program_id: id, exercise_id: r.exercise_id, week: week + 1,
         day: r.day, position: r.position, set_scheme: r.set_scheme, set_type: r.set_type,
-        rest_seconds: r.rest_seconds,
+        rest_seconds: r.rest_seconds, hidden: r.hidden,
       }))
     );
     if (error) setMsg("No se pudo copiar la semana.");
@@ -215,10 +228,27 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
           <ul className="mt-3 divide-y divide-line">
             {dayRows.map((r, i) => (
               <li key={r.id} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm">{i + 1}. {exName(r.exercise_id)}</p>
+                <div className={`min-w-0 ${r.hidden ? "opacity-50" : ""}`}>
+                  <p className="truncate text-sm">
+                    {i + 1}. {exName(r.exercise_id)}
+                    {r.hidden && (
+                      <span className="ml-2 rounded-full bg-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
+                        Oculto
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-muted">{r.set_type} · {r.set_scheme}</p>
                 </div>
+                <button onClick={() => toggleHidden(r)} role="switch" aria-checked={!r.hidden}
+                  aria-label={`Visible para la clienta: ${exName(r.exercise_id)}`}
+                  title={r.hidden ? "Oculto para la clienta" : "Visible para la clienta"}
+                  className="flex shrink-0 flex-col items-center gap-0.5 text-[10px] text-muted">
+                  <span aria-hidden
+                    className={`relative h-5 w-9 rounded-full transition-colors ${r.hidden ? "bg-line" : "bg-accent"}`}>
+                    <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-ink transition-all ${r.hidden ? "left-0.5" : "left-[1.125rem]"}`} />
+                  </span>
+                  Visible
+                </button>
                 <label className="flex shrink-0 items-center gap-1 text-xs text-muted">
                   <input key={`${r.id}-${r.rest_seconds}`} type="number" inputMode="numeric" min={0} step={15}
                     defaultValue={r.rest_seconds ?? ""} placeholder="90"

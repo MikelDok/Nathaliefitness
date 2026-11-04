@@ -43,7 +43,7 @@ export default function Entreno() {
       const [{ data: pe }, { data: logs }] = await Promise.all([
         sb.from("program_exercises")
           .select("id,week,day,position,set_scheme,set_type,exercises(name,muscle_group)")
-          .eq("program_id", p.id).order("position"),
+          .eq("program_id", p.id).eq("hidden", false).order("position"),
         sb.from("exercise_logs")
           .select("program_exercise_id")
           .eq("client_id", uid)

@@ -7,7 +7,9 @@ import {
   SELECT, usedFields, toExportRows, formatDate, type Measurement,
 } from "@/lib/measurements";
 
-type Profile = { id: string; full_name: string; created_at: string; goals: string | null };
+type Profile = {
+  id: string; full_name: string; created_at: string; goals: string | null; water_goal_ml: number | null;
+};
 type CheckIn = {
   id: string; week_start: string;
   energy: number | null; sleep: number | null; hunger: number | null;
@@ -37,13 +39,19 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
   const [exporting, setExporting] = useState(false);
   const [unreadChat, setUnreadChat] = useState(0);
   const [pendingAppt, setPendingAppt] = useState(0);
+  // agua de los últimos 7 días (ml por día, del más antiguo a hoy)
+  const [water, setWater] = useState<number[]>([]);
+  // notas privadas de la coach (tabla client_notes, la clienta no tiene acceso)
+  const [notes, setNotes] = useState("");
+  const [notesSaved, setNotesSaved] = useState("");
+  const [notesMsg, setNotesMsg] = useState<string | null>(null);
 
   async function load() {
     const sb = getSupabase();
     if (!sb) { setLoading(false); return; }
     const [{ data: p }, { data: ci }, { data: lg }, { data: ms }, { data: ph },
-           { count: unread }, { count: pending }] = await Promise.all([
-      sb.from("profiles").select("id,full_name,created_at,goals").eq("id", id).maybeSingle(),
+           { count: unread }, { count: pending }, { data: nt }] = await Promise.all([
+      sb.from("profiles").select("id,full_name,created_at,goals,water_goal_ml").eq("id", id).maybeSingle(),
       sb.from("check_ins").select("*").eq("client_id", id).order("week_start", { ascending: false }),
       sb.from("exercise_logs")
         .select("id,performed_at,note,sets,program_exercises(exercises(name))")
@@ -61,7 +69,10 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
       // citas que ha creado o cambiado ella y yo aún no he visto
       sb.from("appointments").select("id", { count: "exact", head: true })
         .eq("client_id", id).eq("created_by", id).is("seen_by_coach_at", null),
+      sb.from("client_notes").select("body").eq("client_id", id).maybeSingle(),
     ]);
+    setNotes(nt?.body || "");
+    setNotesSaved(nt?.body || "");
     setProfile(p);
     setCheckins((ci as CheckIn[]) || []);
     setLogs((lg as unknown as Log[]) || []);
@@ -82,9 +93,12 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
     const { data: hb } = await sb.from("habits").select("id,title,active")
       .eq("client_id", id).order("title");
     const ids = (hb || []).map((h) => h.id);
-    const { data: hl } = ids.length
-      ? await sb.from("habit_logs").select("habit_id,logged_on").in("habit_id", ids).gte("logged_on", sinceStr)
-      : { data: [] as { habit_id: string; logged_on: string }[] };
+    const [{ data: hl }, { data: wl }] = await Promise.all([
+      ids.length
+        ? sb.from("habit_logs").select("habit_id,logged_on").in("habit_id", ids).gte("logged_on", sinceStr)
+        : Promise.resolve({ data: [] as { habit_id: string; logged_on: string }[] }),
+      sb.from("water_logs").select("logged_on,ml").eq("client_id", id).gte("logged_on", sinceStr),
+    ]);
     const days: string[] = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(since); d.setDate(since.getDate() + i);
       return d.toISOString().slice(0, 10);
@@ -93,6 +107,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
       ...h,
       week: days.map((d) => (hl || []).some((l) => l.habit_id === h.id && l.logged_on === d)),
     })));
+    setWater(days.map((d) => (wl || []).find((w) => w.logged_on === d)?.ml ?? 0));
     setLoading(false);
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
@@ -105,6 +120,21 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
     const { error } = await sb.from("habits").insert({ client_id: id, title: t });
     if (error) { setMsg("No se pudo asignar el hábito (¿falta la migración 0007?)."); return; }
     setNewHabit(""); load();
+  }
+
+  /** Guarda las notas privadas al salir del campo. */
+  async function saveNotes() {
+    if (notes === notesSaved) return;
+    setNotesMsg(null);
+    const sb = getSupabase();
+    if (!sb) return;
+    const { error } = await sb.from("client_notes").upsert(
+      { client_id: id, body: notes, updated_at: new Date().toISOString() },
+      { onConflict: "client_id" },
+    );
+    if (error) { setNotesMsg("No se pudieron guardar las notas."); return; }
+    setNotesSaved(notes);
+    setNotesMsg("Guardado ✓");
   }
 
   async function sendReply(checkinId: string) {
@@ -158,8 +188,25 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
           <p className="text-xs text-muted">
             Clienta desde {new Date(profile.created_at).toLocaleDateString("es-ES")}
           </p>
+          <p className="mt-1 text-sm">
+            <span className="text-muted">Objetivo: </span>
+            {profile.goals || <span className="text-muted">sin indicar</span>}
+          </p>
         </div>
       </header>
+
+      <section className="card p-4">
+        <label htmlFor="coach-notes" className="eyebrow">Notas privadas</label>
+        <textarea id="coach-notes" value={notes} rows={3}
+          onChange={(e) => { setNotes(e.target.value); setNotesMsg(null); }}
+          onBlur={saveNotes}
+          placeholder="Lesiones, preferencias, cosas a vigilar…"
+          className="mt-2 w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+        <p className="mt-1 text-[11px] text-muted">
+          Solo tú ves estas notas. Se guardan al salir del campo.
+          {notesMsg && <span className={notesMsg.startsWith("No") ? " text-red-300" : " text-ok"}> {notesMsg}</span>}
+        </p>
+      </section>
 
       {msg && <p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">{msg}</p>}
 
@@ -305,6 +352,25 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
 
       <section className="card p-4">
         <p className="eyebrow">Hábitos · últimos 7 días</p>
+        {(() => {
+          const goal = profile.water_goal_ml || 2000;
+          const hit = water.filter((ml) => ml >= goal).length;
+          return (
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className="min-w-0 truncate text-sm">
+                💧 Agua <span className="text-xs text-muted">· obj. {(goal / 1000).toLocaleString("es-ES")} L</span>
+              </span>
+              <span className="flex shrink-0 gap-1" aria-label={`Objetivo de agua cumplido ${hit} de 7 días`}>
+                {water.map((ml, i) => (
+                  <span key={i} title={`${(ml / 1000).toLocaleString("es-ES")} L`}
+                    className={`figure w-7 rounded py-0.5 text-center text-[10px] ${ml >= goal ? "bg-ok/15 text-ok" : ml > 0 ? "bg-raised" : "bg-raised text-muted"}`}>
+                    {ml > 0 ? (ml / 1000).toLocaleString("es-ES", { maximumFractionDigits: 1 }) : "–"}
+                  </span>
+                ))}
+              </span>
+            </div>
+          );
+        })()}
         {habits.length === 0 ? (
           <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">Sin hábitos asignados.</p>
         ) : (

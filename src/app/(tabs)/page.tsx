@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Ring from "@/components/Ring";
+import WaterCard from "@/components/WaterCard";
 import ProfileName from "@/components/ProfileName";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
@@ -112,6 +113,7 @@ export default function Inicio() {
             </Link>
           </div>
         </section>
+        <WaterCard />
       </main>
     );
   }
@@ -227,6 +229,8 @@ export default function Inicio() {
           </ul>
         )}
       </section>
+
+      <WaterCard />
 
       <Link href="/checkin" className="card block p-4">
         <div className="flex items-center justify-between">

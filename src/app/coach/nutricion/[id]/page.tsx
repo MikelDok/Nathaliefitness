@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
+import { MEAL_SLOTS as slots, sortBySlot } from "@/lib/meals";
 
 type Plan = { id: string; title: string; kcal_target: number | null; protein_g: number | null; fat_g: number | null; carbs_g: number | null };
 type Meal = {
@@ -10,8 +11,6 @@ type Meal = {
   kcal: number | null; protein_g: number | null; fat_g: number | null; carbs_g: number | null;
   ingredients: string[] | null; instructions: string | null;
 };
-
-const slots = ["Desayuno", "Almuerzo", "Comida", "Snack", "Cena"];
 
 export default function EditorPlan({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -39,7 +38,7 @@ export default function EditorPlan({ params }: { params: Promise<{ id: string }>
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
 
-  const dayMeals = meals.filter((m) => m.day === day);
+  const dayMeals = sortBySlot(meals.filter((m) => m.day === day));
   const tot = (k: "kcal" | "protein_g" | "fat_g" | "carbs_g") =>
     dayMeals.reduce((s, m) => s + (Number(m[k]) || 0), 0);
 

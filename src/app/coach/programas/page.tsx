@@ -83,7 +83,7 @@ export default function Programas() {
     if (e1 || !np) { setBusy(false); setMsg("No se pudo crear la copia."); return; }
 
     const { data: rows, error: e2 } = await sb.from("program_exercises")
-      .select("exercise_id,week,day,position,set_scheme,set_type,rest_seconds,coach_notes")
+      .select("exercise_id,week,day,position,set_scheme,set_type,rest_seconds,coach_notes,hidden")
       .eq("program_id", source.id);
     if (e2) { setBusy(false); setMsg("Copia creada, pero no se pudieron leer los ejercicios."); return; }
 

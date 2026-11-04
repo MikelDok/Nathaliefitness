@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
+import { sortBySlot } from "@/lib/meals";
 
 type Plan = { id: string; title: string; kcal_target: number | null; protein_g: number | null; fat_g: number | null; carbs_g: number | null };
 type Meal = {
@@ -69,7 +70,7 @@ export default function Nutricion() {
   // ---------- Real ----------
   if (loading) return <main><p className="text-sm text-muted">Cargando tu plan…</p></main>;
 
-  const dayMeals = meals.filter((m) => m.day === day);
+  const dayMeals = sortBySlot(meals.filter((m) => m.day === day));
   const tot = (k: "kcal" | "protein_g" | "fat_g" | "carbs_g") =>
     dayMeals.reduce((s, m) => s + (Number(m[k]) || 0), 0);
   const days = [...new Set(meals.map((m) => m.day))].sort((a, b) => a - b);

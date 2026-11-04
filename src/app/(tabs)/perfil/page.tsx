@@ -2,12 +2,12 @@ import Link from "next/link";
 import ProfileName from "@/components/ProfileName";
 import LogoutButton from "@/components/LogoutButton";
 import ChangePassword from "@/components/ChangePassword";
+import GoalsEditor from "@/components/GoalsEditor";
 import { demo } from "@/lib/demo-data";
 import { requireAuth } from "@/lib/config";
 
 // Entradas sin pantalla todavía: se muestran como texto, no como botones.
 const soon = [
-  "Datos y objetivos",
   "Preferencias alimentarias",
   "Notificaciones",
 ];
@@ -62,6 +62,9 @@ export default function Perfil() {
             <ChangePassword />
           </li>
         )}
+        <li>
+          <GoalsEditor />
+        </li>
         {soon.map((label) => (
           <li key={label}
             className="flex items-center justify-between px-4 py-3.5 text-sm text-muted">
