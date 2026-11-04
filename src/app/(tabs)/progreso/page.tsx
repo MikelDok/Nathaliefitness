@@ -3,28 +3,17 @@
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
-import { demo } from "@/lib/demo-data";
+import { demo, demoMeasurements, demoLoadLogs } from "@/lib/demo-data";
+import TrendPanel from "@/components/progress/TrendPanel";
+import MeasurePanel from "@/components/progress/MeasurePanel";
+import LoadsPanel from "@/components/progress/LoadsPanel";
+import { seriesOf, type LoadLog } from "@/lib/progress";
 import {
   FIELDS, MAIN_FIELDS, EXTRA_FIELDS, SELECT, formatDate,
   type Measurement,
 } from "@/lib/measurements";
 
 type Photo = { id: string; taken_at: string; angle: string; storage_path: string; shared_with_coach: boolean; url?: string };
-type PR = { name: string; kg: number };
-
-function Sparkline({ data }: { data: number[] }) {
-  if (data.length < 2) return null;
-  const min = Math.min(...data), max = Math.max(...data);
-  const pts = data
-    .map((v, i) => `${(i / (data.length - 1)) * 280},${52 - ((v - min) / (max - min || 1)) * 44}`)
-    .join(" ");
-  return (
-    <svg viewBox="0 0 280 56" className="mt-3 w-full" role="img" aria-label="Evolución del peso">
-      <polyline points={pts} fill="none" stroke="var(--color-accent)" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 const angles = [
   { value: "front", label: "Frente" },
   { value: "side", label: "Lado" },
@@ -36,7 +25,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export default function Progreso() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [prs, setPrs] = useState<PR[]>([]);
+  const [loadLogs, setLoadLogs] = useState<LoadLog[]>([]);
   // el formulario guarda texto por medida; se precarga con la medición de hoy
   const [form, setForm] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
@@ -63,7 +52,7 @@ export default function Progreso() {
       sb.from("progress_photos").select("id,taken_at,angle,storage_path,shared_with_coach")
         .eq("client_id", uid).order("taken_at", { ascending: false }).limit(6),
       sb.from("exercise_logs")
-        .select("sets, program_exercises(exercises(name))")
+        .select("performed_at, sets, program_exercises(exercises(name))")
         .eq("client_id", uid),
     ]);
 
@@ -89,17 +78,14 @@ export default function Progreso() {
     }
     setPhotos(list);
 
-    // PRs: máximo kg por ejercicio
-    const best = new Map<string, number>();
-    type LogRow = { sets: { kg: number }[] | null; program_exercises: { exercises: { name: string } | null } | null };
-    ((logs as unknown as LogRow[]) || []).forEach((l) => {
-      const name = l.program_exercises?.exercises?.name;
-      if (!name) return;
-      const maxKg = (l.sets || []).reduce((m, s) => Math.max(m, s.kg || 0), 0);
-      if (maxKg > (best.get(name) || 0)) best.set(name, maxKg);
-    });
-    setPrs([...best.entries()].map(([name, kg]) => ({ name, kg }))
-      .sort((a, b) => b.kg - a.kg).slice(0, 3));
+    // Cargas por ejercicio (gráfica y marcas personales)
+    type LogRow = {
+      performed_at: string; sets: { reps: number; kg: number }[] | null;
+      program_exercises: { exercises: { name: string } | null } | null;
+    };
+    setLoadLogs(((logs as unknown as LogRow[]) || []).map((l) => ({
+      performed_at: l.performed_at, sets: l.sets, name: l.program_exercises?.exercises?.name ?? null,
+    })));
     setLoading(false);
   }
 
@@ -164,29 +150,28 @@ export default function Progreso() {
   if (!requireAuth) {
     const p = demo.progress;
     const lost = (p.weightStart - p.weightNow).toFixed(1);
+    const dm = demoMeasurements();
     return (
       <main className="space-y-5">
         <header><p className="eyebrow">Mi recorrido</p><h1 className="mt-1 text-2xl font-bold">Progreso</h1></header>
         <section className="card p-5">
           <div className="flex items-baseline justify-between">
             <p className="eyebrow">Peso</p>
-            <span className="rounded-full bg-ok/15 px-2.5 py-1 text-xs font-semibold text-ok">−{lost} kg</span>
+            <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold">−{lost} kg</span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="figure text-4xl">{p.weightNow}</span>
             <span className="text-sm text-muted">kg · desde {p.weightStart} kg</span>
           </div>
-          <Sparkline data={p.weightSeries} />
+          <TrendPanel points={seriesOf(dm, "weight_kg")} name="Peso" unit="kg" emptyText="" />
         </section>
         <section className="card p-5">
-          <p className="eyebrow">Marcas personales</p>
-          <ul className="mt-3 space-y-2">
-            {p.prs.map((pr) => (
-              <li key={pr.name} className="flex items-center justify-between text-sm">
-                <span>🏆 {pr.name}</span><span className="figure">{pr.kg} kg</span>
-              </li>
-            ))}
-          </ul>
+          <p className="eyebrow">Medidas</p>
+          <MeasurePanel measurements={dm} />
+        </section>
+        <section className="card p-5">
+          <p className="eyebrow">Cargas por ejercicio</p>
+          <LoadsPanel logs={demoLoadLogs()} />
         </section>
       </main>
     );
@@ -210,7 +195,7 @@ export default function Progreso() {
         <div className="flex items-baseline justify-between">
           <p className="eyebrow">Peso</p>
           {diff != null && diff !== 0 && (
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${diff < 0 ? "bg-ok/15 text-ok" : "bg-accent/15 text-accent"}`}>
+            <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold">
               {diff < 0 ? "−" : "+"}{Math.abs(diff).toFixed(1)} kg
             </span>
           )}
@@ -221,7 +206,7 @@ export default function Progreso() {
               <span className="figure text-4xl">{last}</span>
               <span className="text-sm text-muted">kg{first != null && first !== last ? ` · desde ${first} kg` : ""}</span>
             </div>
-            <Sparkline data={weights.map((m) => m.weight_kg!) } />
+            <TrendPanel points={seriesOf(measurements, "weight_kg")} name="Peso" unit="kg" emptyText="" />
           </>
         ) : (
           <p className="mt-2 text-sm text-muted">Registra tu primer peso abajo para empezar la gráfica.</p>
@@ -269,6 +254,11 @@ export default function Progreso() {
             Una medición por día; si guardas otra vez hoy, se actualiza con lo que veas aquí.
           </p>
         </div>
+      </section>
+
+      <section className="card p-5">
+        <p className="eyebrow">Medidas</p>
+        <MeasurePanel measurements={measurements} />
       </section>
 
       <section className="card p-5">
@@ -347,18 +337,10 @@ export default function Progreso() {
         </div>
       </section>
 
-      {prs.length > 0 && (
-        <section className="card p-5">
-          <p className="eyebrow">Marcas personales</p>
-          <ul className="mt-3 space-y-2">
-            {prs.map((pr) => (
-              <li key={pr.name} className="flex items-center justify-between text-sm">
-                <span>🏆 {pr.name}</span><span className="figure">{pr.kg} kg</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <section className="card p-5">
+        <p className="eyebrow">Cargas por ejercicio</p>
+        <LoadsPanel logs={loadLogs} />
+      </section>
     </main>
   );
 }

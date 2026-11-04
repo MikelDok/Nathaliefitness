@@ -23,7 +23,8 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
 - **Supabase** (`@supabase/supabase-js` 2.112): Auth email+contraseña,
   Postgres con RLS, Storage, Realtime (chat).
 - Otras: `@zxing/browser` (código de barras → Open Food Facts), `xlsx`
-  (exportar progreso a Excel desde la ficha de la clienta).
+  (exportar progreso a Excel desde la ficha de la clienta), `recharts`
+  (gráficas de progreso).
 - Despliegue: **Vercel**, se redespliega solo con cada push a `main` en
   GitHub (`MikelDok/Nathaliefitness`).
 - Sin tests ni ESLint configurados. Verificación: `npm run build` + probar en
@@ -96,6 +97,12 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
 - Ejercicios ocultos: `program_exercises.hidden`. Es presentación, no
   seguridad: la RLS no cambia (los registros antiguos conservan el nombre) y
   Entreno filtra `hidden = false`. Duplicar y copiar semana lo copian.
+- Gráficas de progreso: cálculos puros en `src/lib/progress.ts` (rangos,
+  series por medida, kg máximo por sesión y ejercicio, formatos es-ES; las
+  fechas `YYYY-MM-DD` se leen como locales con `parseDay`). Gráfica base
+  `components/charts/TrendChart` (colores con `var(--color-…)`) y paneles en
+  `components/progress/` (`TrendPanel`, `MeasurePanel`, `LoadsPanel`, con
+  prop `compact` para la ficha). Diferencias en color neutro.
 - Franjas de comida: lista y orden únicos en `src/lib/meals.ts` (`MEAL_SLOTS`,
   `sortBySlot`), usados por el editor de la coach y la pestaña de la clienta.
 - Sugerencias (`suggestions`, 0013): la clienta inserta y lee las suyas, sin
@@ -159,6 +166,10 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
   con contador de nuevas en el Resumen) y FAQs (Perfil → `/faqs`; panel →
   `/coach/faqs`). Sin contenido sembrado: las FAQs las escribe Nathalie. En
   modo demo hay 3 FAQs y 1 sugerencia de ejemplo en `demo-data.ts`.
+- Gráficas de progreso con Recharts: en Progreso (peso con rango, medidas con
+  selector, cargas por ejercicio con marcas personales) y versión compacta de
+  peso y cargas en la ficha. Datos de demo con fechas relativas a hoy
+  (`demoMeasurements`, `demoLoadLogs`).
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los

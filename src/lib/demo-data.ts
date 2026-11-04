@@ -1,6 +1,9 @@
 // Datos de demostración. Cuando NEXT_PUBLIC_SUPABASE_URL esté configurado,
 // las pantallas leerán de Supabase; mientras tanto, la app es 100% navegable.
 
+import type { Measurement } from "@/lib/measurements";
+import { toDay, type LoadLog } from "@/lib/progress";
+
 export const demo = {
   client: { name: "Laura", coach: "NEA FITNESS" },
 
@@ -87,3 +90,35 @@ export const demo = {
 };
 
 export const isDemo = !process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+/** Fecha de hace n días, como YYYY-MM-DD (las series de demo terminan siempre "ahora"). */
+const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return toDay(d); };
+
+/** Mediciones de demo: una cada 15 días durante ~6 meses, la última hace 2 días. */
+export function demoMeasurements(): Measurement[] {
+  const w = demo.progress.weightSeries;
+  const waist = [88, 87.5, 86.5, 86, 85, 84, 83.5, 82.5, 81.5, 80.5, 80, 79];
+  const hip = [102, 101.5, 101, 100.5, 100, 99, 98.5, 98, 97.5, 97, 96.5, 96];
+  return w.map((kg, i) => ({
+    id: `m${i}`, measured_at: daysAgo(2 + (w.length - 1 - i) * 15), note: null,
+    weight_kg: kg, waist_cm: waist[i], hip_cm: hip[i],
+    arm_cm: i % 3 === 0 ? 31 - i * 0.1 : null, // medida tomada de vez en cuando
+    chest_cm: null, shoulders_cm: null, thigh_cm: null, calf_cm: null, neck_cm: null, legs_cm: null,
+  }));
+}
+
+/** Registros de entreno de demo: kg máximo por sesión, una sesión por semana. */
+export function demoLoadLogs(): LoadLog[] {
+  const series: Record<string, number[]> = {
+    "Prensa": [90, 95, 95, 100, 105, 105, 110, 115, 115, 120],
+    "Sentadilla (barra)": [45, 47.5, 50, 50, 52.5, 55, 57.5, 60, 62.5],
+    "Peso muerto": [60, 65, 65, 70, 75, 80, 80, 85],
+    "Curl femoral (tumbado)": [35, 37.5, 40, 40, 42.5, 45],
+    "Cardio suave": [0, 0, 0], // sin peso: no sale en las cargas
+  };
+  return Object.entries(series).flatMap(([name, kgs]) =>
+    kgs.map((kg, i) => ({
+      name, performed_at: daysAgo(1 + (kgs.length - 1 - i) * 7),
+      sets: [{ reps: 8, kg: kg > 0 ? kg - 5 : 0 }, { reps: 8, kg: kg > 0 ? kg - 2.5 : 0 }, { reps: 6, kg }],
+    })));
+}

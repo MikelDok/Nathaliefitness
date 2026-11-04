@@ -6,6 +6,9 @@ import { getSupabase } from "@/lib/supabase";
 import {
   SELECT, usedFields, toExportRows, formatDate, type Measurement,
 } from "@/lib/measurements";
+import TrendPanel from "@/components/progress/TrendPanel";
+import LoadsPanel from "@/components/progress/LoadsPanel";
+import { seriesOf, type LoadLog } from "@/lib/progress";
 
 type Profile = {
   id: string; full_name: string; created_at: string; goals: string | null; water_goal_ml: number | null;
@@ -41,6 +44,8 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
   const [pendingAppt, setPendingAppt] = useState(0);
   // agua de los últimos 7 días (ml por día, del más antiguo a hoy)
   const [water, setWater] = useState<number[]>([]);
+  // histórico completo de cargas para la gráfica (la lista de abajo solo trae 15)
+  const [loadLogs, setLoadLogs] = useState<LoadLog[]>([]);
   // notas privadas de la coach (tabla client_notes, la clienta no tiene acceso)
   const [notes, setNotes] = useState("");
   const [notesSaved, setNotesSaved] = useState("");
@@ -50,7 +55,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
     const sb = getSupabase();
     if (!sb) { setLoading(false); return; }
     const [{ data: p }, { data: ci }, { data: lg }, { data: ms }, { data: ph },
-           { count: unread }, { count: pending }, { data: nt }] = await Promise.all([
+           { count: unread }, { count: pending }, { data: nt }, { data: allLogs }] = await Promise.all([
       sb.from("profiles").select("id,full_name,created_at,goals,water_goal_ml").eq("id", id).maybeSingle(),
       sb.from("check_ins").select("*").eq("client_id", id).order("week_start", { ascending: false }),
       sb.from("exercise_logs")
@@ -70,7 +75,16 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
       sb.from("appointments").select("id", { count: "exact", head: true })
         .eq("client_id", id).eq("created_by", id).is("seen_by_coach_at", null),
       sb.from("client_notes").select("body").eq("client_id", id).maybeSingle(),
+      sb.from("exercise_logs").select("performed_at,sets,program_exercises(exercises(name))")
+        .eq("client_id", id),
     ]);
+    type LoadRow = {
+      performed_at: string; sets: { reps: number; kg: number }[] | null;
+      program_exercises: { exercises: { name: string } | null } | null;
+    };
+    setLoadLogs(((allLogs as unknown as LoadRow[]) || []).map((l) => ({
+      performed_at: l.performed_at, sets: l.sets, name: l.program_exercises?.exercises?.name ?? null,
+    })));
     setNotes(nt?.body || "");
     setNotesSaved(nt?.body || "");
     setProfile(p);
@@ -288,6 +302,17 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
             );
           })()
         )}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-line p-3">
+            <p className="eyebrow">Peso</p>
+            <TrendPanel points={seriesOf(measurements, "weight_kg")} name="Peso" unit="kg"
+              showValue compact emptyText="Sin registros de peso." />
+          </div>
+          <div className="rounded-xl border border-line p-3">
+            <p className="eyebrow">Cargas</p>
+            <LoadsPanel logs={loadLogs} compact />
+          </div>
+        </div>
         {measurements.length > 0 && (() => {
           const cols = usedFields(measurements);
           const recent = [...measurements].reverse().slice(0, 12);
