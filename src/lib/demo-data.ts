@@ -28,13 +28,13 @@ export const demo = {
   },
 
   exercises: [
-    { id: "e1", name: "Calentamiento tren inferior", muscle: "Movilidad", scheme: "8 min", type: "Calentamiento", done: true, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
-    { id: "e2", name: "Prensa", muscle: "Cuádriceps", scheme: "8/8/6", type: "Serie normal", done: true, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
-    { id: "e3", name: "Zancadas (multipower)", muscle: "Cuádriceps", scheme: "8/8/6", type: "Serie normal", done: true, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
-    { id: "e4", name: "Curl femoral (tumbado)", muscle: "Isquiotibial", scheme: "8/8/6", type: "Serie normal", done: false, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
-    { id: "e5", name: "Curl femoral (de pie)", muscle: "Isquiotibial", scheme: "8/8/6", type: "Serie normal", done: false, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
-    { id: "e6", name: "Búlgaras", muscle: "Glúteos", scheme: "8/8/6", type: "Serie normal", done: false, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
-    { id: "e7", name: "Cardio suave", muscle: "Cardio", scheme: "15 min", type: "Cardio", done: false, video: "" },
+    { id: "e1", rest: null, name: "Calentamiento tren inferior", muscle: "Movilidad", scheme: "8 min", type: "Calentamiento", done: true, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
+    { id: "e2", rest: 90, name: "Prensa", muscle: "Cuádriceps", scheme: "8/8/6", type: "Serie normal", done: true, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
+    { id: "e3", rest: 90, name: "Zancadas (multipower)", muscle: "Cuádriceps", scheme: "8/8/6", type: "Serie normal", done: true, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
+    { id: "e4", rest: 60, name: "Curl femoral (tumbado)", muscle: "Isquiotibial", scheme: "8/8/6", type: "Serie normal", done: false, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
+    { id: "e5", rest: 60, name: "Curl femoral (de pie)", muscle: "Isquiotibial", scheme: "8/8/6", type: "Serie normal", done: false, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
+    { id: "e6", rest: 90, name: "Búlgaras", muscle: "Glúteos", scheme: "8/8/6", type: "Serie normal", done: false, video: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" },
+    { id: "e7", rest: null, name: "Cardio suave", muscle: "Cardio", scheme: "15 min", type: "Cardio", done: false, video: "" },
   ],
 
   lastLogs: {

@@ -5,6 +5,11 @@ import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
+import { useRestTimer } from "@/lib/useRestTimer";
+import RestTimer from "@/components/RestTimer";
+
+/** Descanso cuando la entrenadora no ha indicado ninguno. */
+const DEFAULT_REST = 90;
 
 type SetRow = { reps: number; kg: number; done: boolean };
 
@@ -22,6 +27,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
   const [name, setName] = useState("");
   const [muscle, setMuscle] = useState("");
   const [scheme, setScheme] = useState("");
+  const [rest, setRest] = useState<number | null>(null);
   const [video, setVideo] = useState<string | null>(null);
   const [pr, setPr] = useState<number | null>(null);
   const [lastSets, setLastSets] = useState<{ reps: number; kg: number }[] | null>(null);
@@ -31,12 +37,14 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(isReal);
+  const timer = useRestTimer(id);
 
   useEffect(() => {
     if (!isReal) {
       const ex = demo.exercises.find((e) => e.id === id) ?? demo.exercises[0];
       const last = demo.lastLogs[ex.id];
       setName(ex.name); setMuscle(ex.muscle); setScheme(ex.scheme);
+      setRest(ex.rest);
       setVideo(ex.video || null);
       setPr(last?.pr ?? null);
       setLastSets(last?.sets ?? null);
@@ -48,13 +56,14 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
     (async () => {
       const { data: pe } = await sb
         .from("program_exercises")
-        .select("id,set_scheme,set_type,exercises(name,muscle_group,video_url)")
+        .select("id,set_scheme,set_type,rest_seconds,exercises(name,muscle_group,video_url)")
         .eq("id", id).maybeSingle();
       if (!pe) { setLoading(false); return; }
       const ex = pe.exercises as unknown as { name: string; muscle_group: string; video_url: string | null } | null;
       setName(ex?.name || "Ejercicio");
       setMuscle(ex?.muscle_group || "");
       setScheme(pe.set_scheme);
+      setRest(pe.rest_seconds ?? null);
       setVideo(ex?.video_url || null);
 
       const { data: logs } = await sb
@@ -77,6 +86,21 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
     setSets((s) => s.map((set, j) => (j === i ? { ...set, [field]: v } : set)));
   const toggle = (i: number) =>
     setSets((s) => s.map((set, j) => (j === i ? { ...set, done: !set.done } : set)));
+
+  const restSec = rest ?? DEFAULT_REST;
+  const nextIdx = sets.findIndex((s) => !s.done);
+  const nextSet = nextIdx >= 0 ? nextIdx + 1 : null;
+
+  /** ✓ de una serie: al marcarla arranca el descanso; en la última, no. */
+  function checkSet(i: number) {
+    timer.unlock(); // iOS: el audio se desbloquea dentro de un toque
+    const marking = !sets[i].done;
+    toggle(i);
+    if (!marking) return;
+    const doneAfter = sets.filter((s, j) => j === i || s.done).length;
+    if (doneAfter === sets.length) timer.complete();
+    else timer.start(restSec, `tras la serie ${i + 1} de ${sets.length}`);
+  }
 
   async function save() {
     setErr(null);
@@ -102,7 +126,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-10 pt-4">
+    <main className="mx-auto max-w-md px-4 pb-48 pt-4">
       <header className="mb-4 flex items-center gap-3">
         <Link href="/entreno" aria-label="Volver" className="rounded-full border border-line p-2 text-muted">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -111,7 +135,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
         </Link>
         <div className="min-w-0">
           <h1 className="truncate text-lg font-bold">{name}</h1>
-          <p className="text-xs text-muted">{muscle} · {scheme}</p>
+          <p className="text-xs text-muted">{muscle} · {scheme} · descanso {restSec} s</p>
         </div>
       </header>
 
@@ -148,7 +172,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
               onChange={(e) => update(i, "kg", +e.target.value)}
               aria-label={`Peso serie ${i + 1}`}
               className="figure rounded-lg border border-line bg-bg px-3 py-2.5 text-center" />
-            <button onClick={() => toggle(i)} aria-pressed={s.done} aria-label={`Marcar serie ${i + 1}`}
+            <button onClick={() => checkSet(i)} aria-pressed={s.done} aria-label={`Marcar serie ${i + 1}`}
               className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm ${s.done ? "border-ok bg-ok/15 text-ok" : "border-line text-muted"}`}>
               ✓
             </button>
@@ -171,6 +195,8 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
           <p className="mt-2 text-center text-xs text-ok">Registro guardado en tu historial.</p>
         )}
       </section>
+
+      <RestTimer timer={timer} rest={restSec} nextSet={nextSet} />
     </main>
   );
 }
