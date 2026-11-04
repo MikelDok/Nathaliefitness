@@ -133,7 +133,7 @@ export default function InformeProgreso({ params }: { params: Promise<{ id: stri
         )}
 
         <footer className="mt-8 border-t border-[#dddddd] pt-3 text-[10px] text-[#999999]">
-          Nathalie · Personal Trainer
+          NEA FITNESS
         </footer>
       </article>
     </>

@@ -86,10 +86,6 @@ export default function Nutricion() {
             className="rounded-full border border-line px-3 py-2 text-xs font-medium">
             Compra 🛒
           </Link>
-          <Link href="/diario"
-            className="rounded-full bg-accent px-3 py-2 text-xs font-semibold text-accent-ink">
-            Diario 📷
-          </Link>
         </div>
       </header>
 
@@ -97,9 +93,6 @@ export default function Nutricion() {
         <div className="card p-6 text-center">
           <p className="text-3xl" aria-hidden>🥗</p>
           <p className="mt-2 text-sm">Tu entrenadora aún no te ha asignado un plan de comidas.</p>
-          <p className="mt-1 text-xs text-muted">
-            Mientras tanto, puedes registrar lo que comes en tu diario con el lector de códigos.
-          </p>
         </div>
       ) : (
         <>

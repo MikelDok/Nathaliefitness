@@ -26,8 +26,6 @@ export default function Inicio() {
   const [programTitle, setProgramTitle] = useState<string | null>(null);
   const [logsToday, setLogsToday] = useState(0);
   const [checkinSent, setCheckinSent] = useState(false);
-  const [kcal, setKcal] = useState(0);
-  const [kcalTarget, setKcalTarget] = useState<number | null>(null);
   const [lastWeight, setLastWeight] = useState<number | null>(null);
   const [unread, setUnread] = useState(0);
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -44,7 +42,7 @@ export default function Inicio() {
       const uid = u.user?.id;
       if (!uid) { setLoading(false); return; }
       const today = new Date().toISOString().slice(0, 10);
-      const [{ data: prog }, { count: logs }, { data: ci }, { data: fd }, { data: mp }, { data: ms }, { data: hb }, { data: hl }, unreadMsgs,
+      const [{ data: prog }, { count: logs }, { data: ci }, { data: ms }, { data: hb }, { data: hl }, unreadMsgs,
         { data: nextAp }, pendingAp] = await Promise.all([
         // mismo criterio que la pestaña Entreno: el activo y, si no hay, el más reciente
         sb.from("programs").select(PLAN_SELECT).eq("client_id", uid)
@@ -54,9 +52,6 @@ export default function Inicio() {
           .eq("client_id", uid).eq("performed_at", today),
         sb.from("check_ins").select("id").eq("client_id", uid)
           .eq("week_start", mondayOf(new Date())).maybeSingle(),
-        sb.from("food_diary").select("kcal").eq("client_id", uid).eq("eaten_on", today),
-        sb.from("meal_plans").select("kcal_target").eq("client_id", uid)
-          .order("created_at", { ascending: false }).limit(1).maybeSingle(),
         sb.from("measurements").select("weight_kg").eq("client_id", uid)
           .not("weight_kg", "is", null).order("measured_at", { ascending: false }).limit(1).maybeSingle(),
         sb.from("habits").select("id,title").eq("client_id", uid).eq("active", true).order("title"),
@@ -72,8 +67,6 @@ export default function Inicio() {
       setProgramTitle(prog?.title ?? null);
       setLogsToday(logs || 0);
       setCheckinSent(!!ci);
-      setKcal((fd || []).reduce((s, r) => s + (r.kcal || 0), 0));
-      setKcalTarget(mp?.kcal_target ?? null);
       setLastWeight(ms?.weight_kg ?? null);
       setUnread(unreadMsgs);
       setPlan((prog as unknown as Plan) || null);
@@ -129,13 +122,13 @@ export default function Inicio() {
   const habitsDone = habits.filter((h) => h.done).length;
   const dayTotal = habits.length + (programTitle ? 1 : 0);
   const dayDone = habitsDone + (programTitle && logsToday > 0 ? 1 : 0);
-  const ringValue = dayTotal > 0 ? dayDone / dayTotal : kcalTarget ? Math.min(1, kcal / kcalTarget) : 0;
+  const ringValue = dayTotal > 0 ? dayDone / dayTotal : 0;
   const todaySession = sessionOn(plan, new Date());
 
   return (
     <main className="space-y-5">
       <header>
-        <p className="eyebrow">Nathalie · Personal Trainer</p>
+        <p className="eyebrow">NEA FITNESS</p>
         <h1 className="mt-1 text-2xl font-bold">Hola, <ProfileName /></h1>
       </header>
 
@@ -148,8 +141,8 @@ export default function Inicio() {
             </>
           ) : (
             <>
-              <span className="figure text-2xl">{kcal}</span>
-              <span className="text-[11px] text-muted">{kcalTarget ? `/ ${kcalTarget} kcal` : "kcal hoy"}</span>
+              <span className="figure text-3xl">0</span>
+              <span className="px-2 text-center text-[11px] leading-tight text-muted">Sin plan asignado</span>
             </>
           )}
         </Ring>
@@ -247,16 +240,6 @@ export default function Inicio() {
             {checkinSent ? "Hecho" : "Completar"}
           </span>
         </div>
-      </Link>
-
-      <Link href="/diario" className="card block p-4">
-        <div className="flex items-baseline justify-between">
-          <p className="eyebrow">Comidas de hoy</p>
-          <span className="figure text-sm">{kcal}{kcalTarget ? ` / ${kcalTarget}` : ""} kcal</span>
-        </div>
-        <p className="mt-1 text-sm text-muted">
-          {kcal > 0 ? "Sigue registrando en tu diario 📷" : "Escanea o apunta tu primera comida"}
-        </p>
       </Link>
 
       {lastWeight != null && (

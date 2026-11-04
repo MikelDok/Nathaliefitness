@@ -41,7 +41,7 @@ export default function CoachHeader() {
     <header className="border-b border-line print:hidden">
       <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
         <div>
-          <p className="eyebrow">Panel · Nathalie</p>
+          <p className="eyebrow">Panel · NEA FITNESS</p>
           <p className="text-sm font-semibold">{name || "\u00A0"}</p>
         </div>
         <button

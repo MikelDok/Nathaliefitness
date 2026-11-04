@@ -2,7 +2,7 @@
 // las pantallas leerán de Supabase; mientras tanto, la app es 100% navegable.
 
 export const demo = {
-  client: { name: "Laura", coach: "Nathalie · Personal Trainer" },
+  client: { name: "Laura", coach: "NEA FITNESS" },
 
   today: {
     dayLabel: "Semana 2 · Día 1 — Tren inferior",

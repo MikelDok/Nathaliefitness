@@ -1,4 +1,4 @@
-# Nathalie · Personal Trainer — Plataforma de coaching
+# NEA FITNESS — Plataforma de coaching
 
 PWA mobile-first para una entrenadora y sus clientes: entrenamientos con vídeo,
 registro de series, progreso (peso, medidas, fotos), check-ins y nutrición.

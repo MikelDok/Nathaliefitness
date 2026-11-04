@@ -1,9 +1,9 @@
 @AGENTS.md
 
-# Nathalie · Personal Trainer — contexto del proyecto
+# NEA FITNESS — contexto del proyecto
 
 ## Qué es y para quién
-PWA mobile-first para **Nathalie, entrenadora personal**, y sus **clientas**.
+PWA mobile-first de la marca **NEA FITNESS**, para **Nathalie, entrenadora personal**, y sus **clientas**.
 Sustituye, entre otras cosas, el Excel de seguimiento de la entrenadora: programas de entreno con vídeo,
 registro de series, progreso (peso, medidas, fotos), check-ins semanales,
 nutrición (plan, diario con lector de código de barras, lista de la compra),

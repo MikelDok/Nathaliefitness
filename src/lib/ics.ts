@@ -36,7 +36,7 @@ function fold(line: string): string {
 }
 
 /** Un .ics con una cita y un recordatorio una hora antes. */
-export function appointmentToIcs(a: Appointment, organiser = "Nathalie · Personal Trainer"): string {
+export function appointmentToIcs(a: Appointment, organiser = "NEA FITNESS"): string {
   const start = new Date(a.starts_at);
   const end = new Date(start.getTime() + a.duration_min * 60000);
   const description = [a.note, a.kind === "videollamada" ? a.location : null]

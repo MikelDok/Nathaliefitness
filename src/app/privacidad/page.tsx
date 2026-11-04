@@ -93,7 +93,7 @@ export default function Privacidad() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 py-10">
       <div className="flex justify-center">
-        <Image src="/logo.png" alt="Nathalie · Personal Trainer" width={230} height={230}
+        <Image src="/logo.png" alt="NEA FITNESS" width={230} height={230}
           priority className="h-auto w-32" />
       </div>
       <p className="eyebrow mt-6 text-center">Privacidad</p>

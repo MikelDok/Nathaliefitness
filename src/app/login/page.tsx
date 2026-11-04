@@ -34,7 +34,7 @@ export default function Login() {
       <div className="flex justify-center">
         <Image
           src="/logo.png"
-          alt="Nathalie · Personal Trainer"
+          alt="NEA FITNESS"
           width={230}
           height={230}
           priority
