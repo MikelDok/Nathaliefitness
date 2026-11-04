@@ -60,9 +60,11 @@ export default function SugerenciasCoach() {
     const sb = getSupabase();
     if (!sb) return;
     const text = (drafts[r.id] || "").trim().slice(0, REPLY_MAX) || null;
-    const { error } = await sb.from("suggestions").update({ coach_reply: text }).eq("id", r.id);
+    // responder implica haberla leído: si seguía "recibida", pasa a "leída"
+    const status: SuggestionStatus = r.status === "recibida" ? "leida" : r.status;
+    const { error } = await sb.from("suggestions").update({ coach_reply: text, status }).eq("id", r.id);
     if (error) { setErr("No se pudo guardar la respuesta."); return; }
-    setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, coach_reply: text } : x)));
+    setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, coach_reply: text, status } : x)));
     flash(r.id);
   }
 
