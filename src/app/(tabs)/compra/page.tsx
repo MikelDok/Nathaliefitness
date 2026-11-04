@@ -4,24 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
+import { aggregate, formatItem } from "@/lib/shopping";
+import { currentWeek } from "@/lib/meals";
 
-type Meal = { day: number; ingredients: string[] | null };
-type Item = { qty: number | null; unit: string; name: string; key: string };
-
-// "200 g lentejas" -> {qty:200, unit:"g", name:"lentejas"}
-function parseLine(line: string): Item {
-  const m = line.trim().match(/^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l|ud|uds|x|tr|cdta|cda)?\.?\s+(.+)$/i);
-  if (m) {
-    const name = m[3].trim();
-    const unit = (m[2] || "x").toLowerCase();
-    return { qty: parseFloat(m[1].replace(",", ".")), unit, name, key: `${name.toLowerCase()}|${unit}` };
-  }
-  const name = line.trim();
-  return { qty: null, unit: "", name, key: name.toLowerCase() };
-}
+type Meal = { week: number; day: number; ingredients: string[] | null };
 
 export default function Compra() {
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [weeks, setWeeks] = useState(1);
+  const [week, setWeek] = useState(1);
   const [days, setDays] = useState<Set<number>>(new Set());
   const [persons, setPersons] = useState(1);
   const [bought, setBought] = useState<Set<string>>(new Set());
@@ -35,47 +26,38 @@ export default function Compra() {
       const { data: u } = await sb.auth.getUser();
       const uid = u.user?.id;
       if (!uid) { setLoading(false); return; }
-      const { data: plan } = await sb.from("meal_plans").select("id")
+      const { data: plan } = await sb.from("meal_plans").select("id,weeks,starts_on")
         .eq("client_id", uid).order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (!plan) { setLoading(false); return; }
       const { data: ms } = await sb.from("meals")
-        .select("day,ingredients").eq("meal_plan_id", plan.id);
+        .select("week,day,ingredients").eq("meal_plan_id", plan.id);
       const list = (ms as Meal[]) || [];
+      const w = currentWeek(plan.starts_on, plan.weeks || 1);
       setMeals(list);
-      setDays(new Set(list.map((m) => m.day)));
+      setWeeks(plan.weeks || 1);
+      setWeek(w);
+      setDays(new Set(list.filter((m) => m.week === w).map((m) => m.day)));
       setLoading(false);
     })();
   }, []);
 
-  const planDays = useMemo(() => [...new Set(meals.map((m) => m.day))].sort((a, b) => a - b), [meals]);
-
-  const items = useMemo(() => {
-    const map = new Map<string, Item>();
-    meals
-      .filter((m) => days.has(m.day))
-      .flatMap((m) => m.ingredients || [])
-      .forEach((line) => {
-        const it = parseLine(line);
-        const prev = map.get(it.key);
-        if (prev && prev.qty != null && it.qty != null) prev.qty += it.qty;
-        else if (!prev) map.set(it.key, { ...it });
-      });
-    return [...map.values()]
-      .map((it) => ({ ...it, qty: it.qty != null ? it.qty * persons : null }))
-      .sort((a, b) => a.name.localeCompare(b.name, "es"));
-  }, [meals, days, persons]);
+  const weekMeals = useMemo(() => meals.filter((m) => m.week === week), [meals, week]);
+  const planDays = useMemo(() => [...new Set(weekMeals.map((m) => m.day))].sort((a, b) => a - b), [weekMeals]);
+  const items = useMemo(
+    () => aggregate(weekMeals.filter((m) => days.has(m.day)), persons),
+    [weekMeals, days, persons],
+  );
 
   const pending = items.filter((i) => !bought.has(i.key));
   const done = items.filter((i) => bought.has(i.key));
+  const fmt = (i: (typeof items)[number]) => formatItem(i, persons);
 
-  const fmt = (i: Item) => {
-    if (i.qty == null) return i.name + (persons > 1 ? ` ×${persons}` : "");
-    let qty = i.qty, unit = i.unit;
-    if (unit === "g" && qty >= 1000) { qty = +(qty / 1000).toFixed(2); unit = "kg"; }
-    if (unit === "ml" && qty >= 1000) { qty = +(qty / 1000).toFixed(2); unit = "l"; }
-    return `${qty % 1 ? qty.toFixed(1) : qty} ${unit === "x" ? "×" : unit} · ${i.name}`;
-  };
-
+  /** Al cambiar de semana se seleccionan todos sus días y se reinicia lo marcado. */
+  function pickWeek(w: number) {
+    setWeek(w);
+    setDays(new Set(meals.filter((m) => m.week === w).map((m) => m.day)));
+    setBought(new Set());
+  }
   const toggleDay = (d: number) =>
     setDays((s) => { const n = new Set(s); if (n.has(d)) n.delete(d); else n.add(d); return n; });
   const toggleItem = (key: string) =>
@@ -93,7 +75,7 @@ export default function Compra() {
         </div>
       </header>
 
-      {planDays.length === 0 ? (
+      {meals.length === 0 ? (
         <div className="card p-6 text-center">
           <p className="text-3xl" aria-hidden>🛒</p>
           <p className="mt-2 text-sm">Tu plan de comidas aún no tiene ingredientes.</p>
@@ -102,15 +84,32 @@ export default function Compra() {
       ) : (
         <>
           <section className="card space-y-3 p-4">
+            {weeks > 1 && (
+              <div>
+                <p className="eyebrow">Semana</p>
+                <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Semana">
+                  {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => (
+                    <button key={w} onClick={() => pickWeek(w)} role="radio" aria-checked={w === week}
+                      className={`rounded-full px-4 py-1.5 text-sm font-medium ${w === week ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
+                      Semana {w}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <p className="eyebrow">Toca para incluir o quitar días</p>
-            <div className="flex flex-wrap gap-2">
-              {planDays.map((d) => (
-                <button key={d} onClick={() => toggleDay(d)} aria-pressed={days.has(d)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium ${days.has(d) ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
-                  Día {d} {days.has(d) ? "✓" : ""}
-                </button>
-              ))}
-            </div>
+            {planDays.length === 0 ? (
+              <p className="rounded-xl bg-raised p-3 text-sm text-muted">Esta semana aún no tiene comidas.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {planDays.map((d) => (
+                  <button key={d} onClick={() => toggleDay(d)} aria-pressed={days.has(d)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium ${days.has(d) ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
+                    Día {d} {days.has(d) ? "✓" : ""}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <p className="text-sm">Para cuántas personas</p>
               <div className="ml-auto flex items-center gap-2">

@@ -60,7 +60,7 @@ src/app/
   coach/                 Entrenadora, con CoachGate
     page.tsx             Panel (lista de clientas)
     clientes/[id]/       Ficha de clienta (+ /chat, /agenda, /informe imprimible)
-    programas/[id]  ejercicios/  nutricion/[id]  sugerencias/  faqs/
+    programas/[id]  ejercicios/  nutricion/[id] (+ /compra imprimible)  sugerencias/  faqs/
 src/components/          AuthGate, CoachGate, BottomNav, Chat, Appointments,
                          BarcodeScanner, PasswordForm, ChangePassword, …
 src/lib/                 supabase, config, auth, chat, agenda, ics,
@@ -115,6 +115,16 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   `components/charts/TrendChart` (colores con `var(--color-…)`) y paneles en
   `components/progress/` (`TrendPanel`, `MeasurePanel`, `LoadsPanel`, con
   prop `compact` para la ficha). Diferencias en color neutro.
+- Planes de comida por semanas (0014): `meal_plans.weeks` (1-4) y
+  `meals.week` (por defecto 1, los planes antiguos son de 1 semana). Con
+  `starts_on`, la semana actual la calcula `currentWeek` (`src/lib/meals.ts`)
+  y **rota** al acabar el plan; sin fecha, semana 1. El editor bloquea bajar
+  el nº de semanas si las que se quitan tienen comidas. "Copiar semana" como
+  en programas. No hay duplicado de planes de comida.
+- Lista de la compra: lógica única en `src/lib/shopping.ts` (`parseLine`,
+  `aggregate`, `formatItem`, `toPlainText`). La clienta (`/compra`) elige una
+  semana; la coach (`/coach/nutricion/[id]/compra`) varias, copia texto para
+  WhatsApp e imprime una hoja blanca (con hex, como el informe).
 - Franjas de comida: lista y orden únicos en `src/lib/meals.ts` (`MEAL_SLOTS`,
   `sortBySlot`), usados por el editor de la coach y la pestaña de la clienta.
 - Sugerencias (`suggestions`, 0013): la clienta inserta y lee las suyas, sin
@@ -143,8 +153,9 @@ re-ejecutables (`if not exists`, `drop policy if exists`, `on conflict`).
 | 0011 | Agenda (`appointments`) + `programs.starts_on` / `weekdays` |
 | 0012 | `client_notes`, `water_logs`, `profiles.water_goal_ml` + permisos de columna en `profiles`, `program_exercises.hidden` |
 | 0013 | Buzón de sugerencias (`suggestions`, permisos de columna) y FAQs (`faqs`) |
+| 0014 | Planes de comida por semanas: `meal_plans.weeks` (1-4), `meal_plans.starts_on`, `meals.week` |
 
-**La siguiente es `0014_…`.**
+**La siguiente es `0015_…`.**
 
 ## Variables de entorno (`.env.local`, y las mismas en Vercel)
 ```
@@ -183,6 +194,8 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
   peso y cargas en la ficha. Datos de demo con fechas relativas a hoy
   (`demoMeasurements`, `demoLoadLogs`).
 - Tema claro/oscuro/sistema (clienta y panel) y decimales con coma.
+- Planes de comida de varias semanas (pestañas en el editor y en Nutrición,
+  fecha de inicio) y lista de la compra en el panel (copiar e imprimir).
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los
