@@ -26,6 +26,7 @@ export default function CoachDashboard() {
   const [unread, setUnread] = useState<Record<string, number>>({});
   const [appts, setAppts] = useState<Appointment[]>([]);
   const [pendingAppt, setPendingAppt] = useState<Record<string, number>>({});
+  const [newSuggestions, setNewSuggestions] = useState(0);
 
   useEffect(() => {
     const sb = getSupabase();
@@ -48,6 +49,11 @@ export default function CoachDashboard() {
       setClients(clientList);
       setCheckins(ci || []);
       setUnread(await unreadByThread(sb, uid));
+
+      // sugerencias sin revisar (la RLS ya limita a las de sus clientas)
+      const { count: sug } = await sb.from("suggestions").select("id", { count: "exact", head: true })
+        .eq("status", "recibida");
+      setNewSuggestions(sug || 0);
 
       // citas de todas sus clientas, próximas primero (la RLS ya filtra)
       const from = new Date(); from.setHours(0, 0, 0, 0);
@@ -163,6 +169,21 @@ export default function CoachDashboard() {
             ))}
           </ul>
         </section>
+      )}
+
+      {!loading && newSuggestions > 0 && (
+        <Link href="/coach/sugerencias"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-accent/40 bg-accent/5 p-4">
+          <div className="min-w-0">
+            <p className="eyebrow text-accent">💡 Sugerencias</p>
+            <p className="mt-1 text-sm">
+              {newSuggestions} sugerencia{newSuggestions > 1 ? "s" : ""} nueva{newSuggestions > 1 ? "s" : ""} del piloto
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-accent-ink">
+            {newSuggestions}
+          </span>
+        </Link>
       )}
 
       {!loading && appts.length > 0 && (

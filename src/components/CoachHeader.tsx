@@ -11,6 +11,8 @@ const nav = [
   { href: "/coach/programas", label: "Programas" },
   { href: "/coach/nutricion", label: "Nutrición" },
   { href: "/coach/ejercicios", label: "Ejercicios" },
+  { href: "/coach/sugerencias", label: "Sugerencias" },
+  { href: "/coach/faqs", label: "FAQs" },
 ];
 
 export default function CoachHeader() {
@@ -51,14 +53,14 @@ export default function CoachHeader() {
           Cerrar sesión
         </button>
       </div>
-      <nav className="mx-auto flex max-w-4xl gap-1 px-4 pb-2" aria-label="Secciones del panel">
+      <nav className="mx-auto flex max-w-4xl gap-1 overflow-x-auto px-4 pb-2" aria-label="Secciones del panel">
         {nav.map((n) => {
           const active = n.href === "/coach" ? path === "/coach" : path.startsWith(n.href);
           return (
             <Link
               key={n.href}
               href={n.href}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
                 active ? "bg-accent text-accent-ink" : "text-muted"
               }`}
             >

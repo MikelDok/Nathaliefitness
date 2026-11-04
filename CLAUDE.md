@@ -52,11 +52,12 @@ src/app/
     page.tsx             Inicio
     entreno/  progreso/  nutricion/  diario/  compra/
     habitos/  checkin/   mensajes/   agenda/  perfil/
+    sugerencias/  faqs/  (se llega desde Perfil; diario/ sin accesos, oculto)
   ejercicio/[id]/        Detalle de ejercicio + registro de series
   coach/                 Entrenadora, con CoachGate
     page.tsx             Panel (lista de clientas)
     clientes/[id]/       Ficha de clienta (+ /chat, /agenda, /informe imprimible)
-    programas/[id]  ejercicios/  nutricion/[id]
+    programas/[id]  ejercicios/  nutricion/[id]  sugerencias/  faqs/
 src/components/          AuthGate, CoachGate, BottomNav, Chat, Appointments,
                          BarcodeScanner, PasswordForm, ChangePassword, …
 src/lib/                 supabase, config, auth, chat, agenda, ics,
@@ -97,6 +98,13 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   Entreno filtra `hidden = false`. Duplicar y copiar semana lo copian.
 - Franjas de comida: lista y orden únicos en `src/lib/meals.ts` (`MEAL_SLOTS`,
   `sortBySlot`), usados por el editor de la coach y la pestaña de la clienta.
+- Sugerencias (`suggestions`, 0013): la clienta inserta y lee las suyas, sin
+  update ni delete; la coach lee y actualiza las de sus clientas, sin delete.
+  Permisos de columna: insert solo de `client_id, kind, body, screen` y update
+  solo de `status, coach_reply`; `updated_at` lo pone un trigger. Tipos y
+  estados en `src/lib/suggestions.ts`.
+- FAQs (`faqs`, 0013): la coach gestiona las suyas; la clienta lee solo las
+  `published` de su coach (mismo patrón que `exercises`). Orden por `position`.
 
 ## Migraciones (`supabase/migrations/`)
 Se ejecutan **a mano y en orden** en el SQL Editor de Supabase. Escríbelas
@@ -115,8 +123,9 @@ re-ejecutables (`if not exists`, `drop policy if exists`, `on conflict`).
 | 0010 | Chat (`messages`, Realtime, bucket `chat-media`) |
 | 0011 | Agenda (`appointments`) + `programs.starts_on` / `weekdays` |
 | 0012 | `client_notes`, `water_logs`, `profiles.water_goal_ml` + permisos de columna en `profiles`, `program_exercises.hidden` |
+| 0013 | Buzón de sugerencias (`suggestions`, permisos de columna) y FAQs (`faqs`) |
 
-**La siguiente es `0013_…`.**
+**La siguiente es `0014_…`.**
 
 ## Variables de entorno (`.env.local`, y las mismas en Vercel)
 ```
@@ -146,6 +155,10 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
   detalle del ejercicio (`src/lib/useRestTimer.ts`, `RestTimer`).
 - Notas privadas de la coach, registro de agua, franja "Picoteo" y ejercicios
   ocultos (0012).
+- Buzón de sugerencias (Perfil → `/sugerencias`; panel → `/coach/sugerencias`,
+  con contador de nuevas en el Resumen) y FAQs (Perfil → `/faqs`; panel →
+  `/coach/faqs`). Sin contenido sembrado: las FAQs las escribe Nathalie. En
+  modo demo hay 3 FAQs y 1 sugerencia de ejemplo en `demo-data.ts`.
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los

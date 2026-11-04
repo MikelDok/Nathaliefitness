@@ -68,6 +68,22 @@ export const demo = {
       { slot: "Cena", name: "Ensalada de lentejas, remolacha, atún y feta", kcal: 486, protein: 34 },
     ],
   },
+
+  // Solo para el modo demo: en la app real las FAQs las escribe la entrenadora.
+  faqs: [
+    { id: "f1", question: "¿Qué hago si no puedo entrenar el día que me toca?",
+      answer: "No pasa nada: haz la sesión al día siguiente y sigue el orden del programa. Si te pasa a menudo, escríbeme por el chat y lo ajustamos." },
+    { id: "f2", question: "¿Cuánto tengo que descansar entre series?",
+      answer: "Lo verás en cada ejercicio, junto a las series. Al marcar una serie con ✓ arranca el temporizador de descanso." },
+    { id: "f3", question: "¿Cuándo hago el check-in semanal?",
+      answer: "Una vez por semana, mejor siempre el mismo día. Te responderé en tu ficha de check-in." },
+  ],
+
+  suggestions: [
+    { id: "s1", client_id: "demo", kind: "idea" as const, body: "Estaría bien poder ver el vídeo del ejercicio a pantalla completa.",
+      screen: "Detalle de ejercicio", status: "hecha" as const, coach_reply: "¡Hecho! Pulsa el botón de pantalla completa del vídeo.",
+      created_at: "2026-10-20T10:00:00Z" },
+  ],
 };
 
 export const isDemo = !process.env.NEXT_PUBLIC_SUPABASE_URL;

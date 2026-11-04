@@ -75,6 +75,20 @@ export default function Perfil() {
           </li>
         ))}
         <li>
+          <Link href="/faqs"
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
+            Preguntas frecuentes
+            <span aria-hidden className="text-muted">›</span>
+          </Link>
+        </li>
+        <li>
+          <Link href="/sugerencias"
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
+            Sugerencias
+            <span aria-hidden className="text-muted">›</span>
+          </Link>
+        </li>
+        <li>
           <Link href="/privacidad"
             className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
             Privacidad y mis datos
