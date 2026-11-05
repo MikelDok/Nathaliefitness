@@ -19,12 +19,41 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
   tiene cambios respecto a lo conocido; consulta `node_modules/next/dist/docs/`.
 - **React 19.2.8**, **TypeScript 5**, **Tailwind CSS 4** (tokens en
   `src/app/globals.css`: `bg`, `surface`, `raised`, `line`, `ink`, `muted`,
-  `accent` rose gold, `accent-ink`, `ok`, `danger`; clases `.card`, `.eyebrow`,
-  `.figure`, `.logo-mark`). **Usa siempre tokens**, nunca colores sueltos
-  (`red-300`, hex…): el tema claro solo redefine esos tokens.
+  `accent` rose gold, `accent-ink`, `ok`, `danger`). **Usa siempre tokens**,
+  nunca colores sueltos (`red-300`, hex…): el tema claro solo redefine esos tokens.
+- **Sistema visual** (rediseño 1/3, "deportivo y minimalista"):
+  - Fuentes con `next/font/google` en el layout raíz (autoalojadas):
+    **Barlow Condensed** 600/700 → `font-display` (h1, eyebrows, `.figure`,
+    botones, chips, etiquetas de la barra; siempre en mayúsculas, tracking
+    0.12–0.18em en etiquetas y -0.01em en títulos) y **Manrope** 400/500/700 →
+    `font-sans` (resto del texto). Variables `--font-barlow` / `--font-manrope`
+    mapeadas en `@theme inline`.
+  - Tokens oscuros: bg `#0b0b0c`, surface `#1c1c1f`, raised `#25252a`, line
+    `#2a2a2f`, ink `#f5f2ef`, muted `#8e8e94`, accent `#dfa08f`, accent-ink
+    `#1a0f0b`, ok `#7fc29b`, danger `#f5a3a3`. Claros: bg `#f7f7f6`, surface
+    `#e7e7e4`, raised `#dbdbd7`, line `#d0d0cb`, ink `#18181a`, muted `#5a5a61`,
+    accent `#844334`, accent-ink `#fff`, ok `#266a43`, danger `#a11f18`.
+    surface/bg ≈ 1,15:1 (tarjetas sin borde) y raised un escalón más. AA
+    comprobado en ambos (texto sobre bg/surface/raised, acento y danger sobre
+    su tinte al 15 %). Si cambia bg, actualizar `THEME_COLOR` (`src/lib/theme.ts`).
+  - Clases base (en `@layer components`, así las utilidades las ajustan):
+    `.card` (surface, sin borde, radio 14, padding 16), `.eyebrow`, `.figure`
+    (display 700, tabular-nums), `.btn-primary` (píldora accent, display en
+    mayúsculas, 44 px), `.chip` + `.chip-active`, `.field` (campo sin borde),
+    `.logo-mark`. `h1` es display en mayúsculas por defecto (`@layer base`).
+  - **Tarjetas solo para bloques de acción** (enlaces, botones); las listas de
+    información van **planas** con separadores finos (`divide-y divide-line`).
+  - Espaciado: márgenes laterales 20 px (`px-5`), 28 px entre bloques
+    (`space-y-7`), 16 px dentro de tarjetas.
+  - Iconos **lucide-react** a 20 px y trazo 1.75 (22 px en la barra) en vez de
+    emojis decorativos de la interfaz. Los emojis solo en contenido que escribe
+    la coach. Pantallas ya migradas: Inicio, BottomNav, login, `/recuperar`,
+    `/nueva-contrasena`, `/privacidad` (el resto, encargos 2 y 3).
+  - `Ring`: 108 px, trazo 12, sin halo, accent (ok con `done`). Frase del día
+    de Inicio en `src/lib/quotes.ts` (7, una por día de la semana).
 - **Supabase** (`@supabase/supabase-js` 2.112): Auth email+contraseña,
   Postgres con RLS, Storage, Realtime (chat).
-- Otras: `@zxing/browser` (código de barras → Open Food Facts), `xlsx`
+- Otras: `lucide-react` (iconos), `@zxing/browser` (código de barras → Open Food Facts), `xlsx`
   (exportar progreso a Excel desde la ficha de la clienta), `recharts`
   (gráficas de progreso).
 - Despliegue: **Vercel**, se redespliega solo con cada push a `main` en
@@ -100,7 +129,7 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   seguridad: la RLS no cambia (los registros antiguos conservan el nombre) y
   Entreno filtra `hidden = false`. Duplicar y copiar semana lo copian.
 - Tema claro/oscuro: `html[data-theme="light"]` redefine los tokens en
-  `globals.css` (contraste AA comprobado; acento claro `#96503f`). Preferencia
+  `globals.css` (contraste AA comprobado; acento claro `#844334`). Preferencia
   en `localStorage["nea:theme"]` (`dark` por defecto | `light` | `system`),
   lógica en `src/lib/theme.ts`. Script inline en el `<head>` del layout raíz
   (sin parpadeo) + `ThemeSync` (reaplica tras el remontaje de Strict Mode en
@@ -196,6 +225,9 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
 - Tema claro/oscuro/sistema (clienta y panel) y decimales con coma.
 - Planes de comida de varias semanas (pestañas en el editor y en Nutrición,
   fecha de inicio) y lista de la compra en el panel (copiar e imprimir).
+- Rediseño visual 1/3: fuentes, tokens, componentes base, Inicio, barra
+  inferior y pantallas de acceso. Pendientes los encargos 2 y 3 (resto de
+  pantallas de la clienta y panel).
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los

@@ -89,7 +89,7 @@ export default function NuevaContrasena() {
             limitado. Pide uno nuevo y ábrelo desde el último correo que recibas.
           </p>
           <Link href="/recuperar"
-            className="block w-full rounded-full bg-accent py-3.5 text-sm font-semibold text-accent-ink">
+            className="btn-primary w-full">
             Pedir un enlace nuevo
           </Link>
           <Link href="/login" className="block w-full py-2 text-xs text-muted">

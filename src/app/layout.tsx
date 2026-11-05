@@ -1,7 +1,16 @@
 import type { Metadata, Viewport } from "next";
+import { Barlow_Condensed, Manrope } from "next/font/google";
 import "./globals.css";
 import ThemeSync from "@/components/ThemeSync";
 import { THEME_COLOR, THEME_SCRIPT } from "@/lib/theme";
+
+// Se autoalojan en el build: el navegador no pide nada a Google.
+const display = Barlow_Condensed({
+  subsets: ["latin"], weight: ["600", "700"], variable: "--font-barlow", display: "swap",
+});
+const sans = Manrope({
+  subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-manrope", display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "NEA FITNESS",
@@ -22,7 +31,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     // data-theme lo corrige el script antes del primer pintado: el DOM manda
-    <html lang="es" data-theme="dark" suppressHydrationWarning>
+    <html lang="es" data-theme="dark" className={`${display.variable} ${sans.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>

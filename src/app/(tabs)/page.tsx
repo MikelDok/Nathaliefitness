@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { CalendarDays, Check, ChevronRight, ClipboardCheck, MessageCircle, Scale } from "lucide-react";
 import Ring from "@/components/Ring";
 import WaterCard from "@/components/WaterCard";
-import ProfileName from "@/components/ProfileName";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
 import { unreadTotal } from "@/lib/chat";
+import { fmtNum } from "@/lib/progress";
+import { quoteOfDay } from "@/lib/quotes";
 import {
   APPOINTMENT_SELECT, PLAN_SELECT, pendingTotal, sessionOn, formatWhen,
   type Appointment, type Plan,
@@ -20,10 +22,40 @@ function mondayOf(d: Date): string {
   return x.toISOString().slice(0, 10);
 }
 
+/** "JUEVES 5 NOV" (el eyebrow ya pone las mayúsculas). */
+function todayLabel(d = new Date()): string {
+  const weekday = d.toLocaleDateString("es-ES", { weekday: "long" });
+  const month = d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "");
+  return `${weekday} ${d.getDate()} ${month}`;
+}
+
+const firstName = (full: string) => full.trim().split(/\s+/)[0] || "";
+
+const ICON = { size: 20, strokeWidth: 1.75, "aria-hidden": true } as const;
+
 type Habit = { id: string; title: string; done: boolean };
 
+/** Datos que pinta Inicio; los rellena la demo o Supabase. */
+type Today = {
+  name: string;
+  ringDone: number;
+  ringTotal: number;
+  /** Línea principal de la sesión: "Semana 2 · Día 3", "Descanso" o el título del programa. */
+  session: string;
+  /** Línea secundaria en muted. */
+  detail: string;
+  cta: string | null;
+  habits: Habit[];
+  checkinSent: boolean;
+  unread: number;
+  nextAppt: Appointment | null;
+  pendingAppt: number;
+  lastWeight: number | null;
+};
+
 export default function Inicio() {
-  const [habits, setHabits] = useState<Habit[]>([]);
+  const [habits, setHabits] = useState<Habit[]>(requireAuth ? [] : demo.habits.map((h) => ({ ...h })));
+  const [fullName, setFullName] = useState(requireAuth ? "" : demo.client.name);
   const [programTitle, setProgramTitle] = useState<string | null>(null);
   const [logsToday, setLogsToday] = useState(0);
   const [checkinSent, setCheckinSent] = useState(false);
@@ -44,7 +76,7 @@ export default function Inicio() {
       if (!uid) { setLoading(false); return; }
       const today = new Date().toISOString().slice(0, 10);
       const [{ data: prog }, { count: logs }, { data: ci }, { data: ms }, { data: hb }, { data: hl }, unreadMsgs,
-        { data: nextAp }, pendingAp] = await Promise.all([
+        { data: nextAp }, pendingAp, { data: prof }] = await Promise.all([
         // mismo criterio que la pestaña Entreno: el activo y, si no hay, el más reciente
         sb.from("programs").select(PLAN_SELECT).eq("client_id", uid)
           .order("is_active", { ascending: false })
@@ -62,9 +94,11 @@ export default function Inicio() {
           .eq("status", "confirmada").gte("starts_at", new Date().toISOString())
           .order("starts_at").limit(1).maybeSingle(),
         pendingTotal(sb, uid, false),
+        sb.from("profiles").select("full_name").eq("id", uid).maybeSingle(),
       ]);
       const doneSet = new Set((hl || []).map((x) => x.habit_id));
       setHabits(((hb || []) as { id: string; title: string }[]).map((h) => ({ ...h, done: doneSet.has(h.id) })));
+      setFullName(prof?.full_name || u.user?.email?.split("@")[0] || "");
       setProgramTitle(prog?.title ?? null);
       setLogsToday(logs || 0);
       setCheckinSent(!!ci);
@@ -78,10 +112,11 @@ export default function Inicio() {
   }, []);
 
   async function toggleHabit(h: Habit) {
+    setHabits((list) => list.map((x) => (x.id === h.id ? { ...x, done: !x.done } : x)));
+    if (!requireAuth) return; // demo: solo en pantalla
     const sb = getSupabase();
     if (!sb) return;
     const today = new Date().toISOString().slice(0, 10);
-    setHabits((list) => list.map((x) => (x.id === h.id ? { ...x, done: !x.done } : x)));
     if (h.done) {
       await sb.from("habit_logs").delete().eq("habit_id", h.id).eq("logged_on", today);
     } else {
@@ -89,140 +124,128 @@ export default function Inicio() {
     }
   }
 
+  const habitsDone = habits.filter((h) => h.done).length;
+
   // ---------- Demo ----------
   if (!requireAuth) {
     const t = demo.today;
-    const total = t.exercisesTotal + t.habitsTotal;
-    const done = t.exercisesDone + t.habitsDone;
+    const [session, focus] = t.dayLabel.split(" — ");
     return (
-      <main className="space-y-5">
-        <header>
-          <p className="eyebrow">{demo.client.coach}</p>
-          <h1 className="mt-1 text-2xl font-bold">Hola, {demo.client.name}</h1>
-        </header>
-        <section className="card flex items-center gap-5 p-5">
-          <Ring value={done / total}>
-            <span className="figure text-3xl">{done}<span className="text-muted">/{total}</span></span>
-            <span className="text-[11px] text-muted">hoy</span>
-          </Ring>
-          <div className="min-w-0 flex-1">
-            <p className="eyebrow">Tu día</p>
-            <p className="mt-1 text-sm leading-snug">{t.dayLabel}</p>
-            <Link href="/entreno" className="mt-3 inline-block rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-ink">
-              Continuar entreno
-            </Link>
-          </div>
-        </section>
-        <WaterCard />
-      </main>
+      <TodayView
+        onToggle={toggleHabit}
+        data={{
+          name: firstName(fullName),
+          ringDone: t.exercisesDone + habitsDone,
+          ringTotal: t.exercisesTotal + habits.length,
+          session,
+          detail: `${focus} · ${t.exercisesDone} ejercicios hoy`,
+          cta: "Continuar",
+          habits, checkinSent: false, unread: 0, nextAppt: null, pendingAppt: 0,
+          lastWeight: demo.progress.weightNow,
+        }}
+      />
     );
   }
 
   // ---------- Real ----------
   if (loading) return <main><p className="text-sm text-muted">Preparando tu día…</p></main>;
 
-  const habitsDone = habits.filter((h) => h.done).length;
   const dayTotal = habits.length + (programTitle ? 1 : 0);
   const dayDone = habitsDone + (programTitle && logsToday > 0 ? 1 : 0);
-  const ringValue = dayTotal > 0 ? dayDone / dayTotal : 0;
   const todaySession = sessionOn(plan, new Date());
+  const scheduled = !!plan?.weekdays?.length;
+  const logsText = logsToday > 0
+    ? `${logsToday} ejercicio${logsToday > 1 ? "s" : ""} hoy`
+    : "Aún no has registrado ejercicios hoy";
 
   return (
-    <main className="space-y-5">
-      <header>
-        <p className="eyebrow">NEA FITNESS</p>
-        <h1 className="mt-1 text-2xl font-bold">Hola, <ProfileName /></h1>
+    <TodayView
+      onToggle={toggleHabit}
+      data={{
+        name: firstName(fullName),
+        ringDone: dayDone,
+        ringTotal: dayTotal,
+        session: !programTitle
+          ? "Sin programa"
+          : scheduled
+            ? (todaySession ? `Semana ${todaySession.week} · Día ${todaySession.day}` : "Descanso")
+            : programTitle,
+        detail: !programTitle
+          ? "Tu entrenadora te lo asignará pronto"
+          : scheduled ? `${programTitle} · ${logsText}` : logsText,
+        cta: dayTotal > 0 && dayDone === dayTotal ? "Ver entreno" : logsToday > 0 ? "Continuar" : "Empezar",
+        habits, checkinSent, unread, nextAppt, pendingAppt, lastWeight,
+      }}
+    />
+  );
+}
+
+function TodayView({ data: d, onToggle }: { data: Today; onToggle: (h: Habit) => void }) {
+  const complete = d.ringTotal > 0 && d.ringDone === d.ringTotal;
+  const habitsDone = d.habits.filter((h) => h.done).length;
+  // fecha y frase en el cliente: la página se prerenderiza en el build
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => setNow(new Date()), []);
+
+  return (
+    <main className="space-y-7">
+      {/* ---------- Cabecera ---------- */}
+      <header className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="eyebrow min-h-[1lh]">{now ? todayLabel(now) : ""}</p>
+          <h1 className="mt-2 truncate text-[40px]">Hola{d.name ? `, ${d.name}` : ""}</h1>
+          <p className="mt-2 min-h-[1lh] text-sm text-muted">{now ? quoteOfDay(now) : ""}</p>
+        </div>
+        <Link href="/perfil" aria-label="Tu perfil"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-raised font-display text-lg font-bold uppercase">
+          {d.name.charAt(0) || "·"}
+        </Link>
       </header>
 
-      <section className="card flex items-center gap-5 p-5">
-        <Ring value={ringValue}>
-          {dayTotal > 0 ? (
-            <>
-              <span className="figure text-3xl">{dayDone}<span className="text-muted">/{dayTotal}</span></span>
-              <span className="text-[11px] text-muted">hoy</span>
-            </>
-          ) : (
-            <>
-              <span className="figure text-3xl">0</span>
-              <span className="px-2 text-center text-[11px] leading-tight text-muted">Sin plan asignado</span>
-            </>
-          )}
+      {/* ---------- Héroe: anillo + sesión de hoy ---------- */}
+      <section className="flex items-center gap-5" aria-label="Tu día">
+        <Ring value={d.ringTotal > 0 ? d.ringDone / d.ringTotal : 0} done={complete}>
+          <span className="figure text-[32px]">{d.ringTotal > 0 ? d.ringDone : 0}</span>
+          <span className="eyebrow mt-1 text-[10px] leading-none">
+            {d.ringTotal > 0 ? `de ${d.ringTotal}` : "Sin plan"}
+          </span>
         </Ring>
         <div className="min-w-0 flex-1">
-          <p className="eyebrow">Tu día</p>
-          <p className="mt-1 text-sm leading-snug">
-            {programTitle ?? "Sin programa asignado todavía"}
-          </p>
-          {!!plan?.weekdays?.length && (
-            <p className="mt-0.5 text-xs text-accent">
-              {todaySession
-                ? `Hoy toca: Semana ${todaySession.week} · Día ${todaySession.day}`
-                : "Hoy descanso 💤"}
-            </p>
+          <p className={`eyebrow ${complete ? "text-ok" : ""}`}>{complete ? "Día hecho" : "Hoy"}</p>
+          <p className="mt-1 font-display text-2xl font-bold uppercase leading-none tracking-[-0.01em]">{d.session}</p>
+          <p className="mt-1.5 text-xs text-muted">{d.detail}</p>
+          {d.cta && (
+            <Link href="/entreno" className="btn-primary mt-3">{d.cta}</Link>
           )}
-          <p className="mt-0.5 text-xs text-muted">
-            {logsToday > 0 ? `${logsToday} ejercicio${logsToday > 1 ? "s" : ""} registrado${logsToday > 1 ? "s" : ""} hoy 💪` : "Aún no has registrado ejercicios hoy"}
-          </p>
-          <Link href="/entreno" className="mt-3 inline-block rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-ink">
-            {logsToday > 0 ? "Continuar entreno" : "Empezar entreno"}
-          </Link>
         </div>
       </section>
 
-      <Link href="/agenda" className="card flex items-center justify-between gap-3 p-4">
-        <div className="min-w-0">
-          <p className="eyebrow">Agenda</p>
-          <p className="mt-1 truncate text-sm">
-            {nextAppt ? `Próxima cita: ${formatWhen(nextAppt.starts_at)}` : "Ver tu calendario"}
-          </p>
-        </div>
-        {pendingAppt > 0 ? (
-          <span className="shrink-0 rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-accent-ink">
-            {pendingAppt}
-          </span>
-        ) : (
-          <span aria-hidden className="shrink-0 text-muted">›</span>
-        )}
-      </Link>
-
-      <Link href="/mensajes" className="card flex items-center justify-between gap-3 p-4">
-        <div className="min-w-0">
-          <p className="eyebrow">Mensajes</p>
-          <p className="mt-1 text-sm">
-            {unread > 0
-              ? `Tienes ${unread} mensaje${unread > 1 ? "s" : ""} sin leer`
-              : "Escribe a tu entrenadora"}
-          </p>
-        </div>
-        {unread > 0 ? (
-          <span className="shrink-0 rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-accent-ink">
-            {unread}
-          </span>
-        ) : (
-          <span aria-hidden className="shrink-0 text-muted">›</span>
-        )}
-      </Link>
-
-      <section className="card p-4">
-        <div className="flex items-baseline justify-between">
+      {/* ---------- Hábitos: lista plana ---------- */}
+      <section>
+        <div className="flex items-baseline justify-between gap-3 border-b border-line pb-2">
           <p className="eyebrow">Hábitos de hoy</p>
-          <Link href="/habitos" className="text-xs text-muted underline">Gestionar</Link>
+          <div className="flex items-baseline gap-3">
+            {d.habits.length > 0 && (
+              <span className="figure text-base text-accent">{habitsDone}/{d.habits.length}</span>
+            )}
+            <Link href="/habitos" className="text-xs text-muted underline">Gestionar</Link>
+          </div>
         </div>
-        {habits.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">
+        {d.habits.length === 0 ? (
+          <p className="pt-3 text-sm text-muted">
             Sin hábitos todavía. <Link href="/habitos" className="text-accent underline">Crea el primero</Link>.
           </p>
         ) : (
-          <ul className="mt-3 space-y-2">
-            {habits.map((h) => (
+          <ul className="divide-y divide-line">
+            {d.habits.map((h) => (
               <li key={h.id}>
-                <button onClick={() => toggleHabit(h)} aria-pressed={h.done}
-                  className="flex w-full items-center gap-3 text-left text-sm">
+                <button onClick={() => onToggle(h)} aria-pressed={h.done}
+                  className="flex w-full items-center gap-3 py-3 text-left text-sm">
                   <span aria-hidden
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs ${h.done ? "border-ok bg-ok/15 text-ok" : "border-line text-transparent"}`}>
-                    ✓
+                    className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full ${h.done ? "bg-accent text-accent-ink" : "border-[1.5px] border-muted/60"}`}>
+                    {h.done && <Check size={14} strokeWidth={3} />}
                   </span>
-                  <span className={h.done ? "text-muted line-through" : ""}>{h.title}</span>
+                  <span className={h.done ? "text-muted" : ""}>{h.title}</span>
                 </button>
               </li>
             ))}
@@ -230,30 +253,57 @@ export default function Inicio() {
         )}
       </section>
 
+      {/* ---------- Agua ---------- */}
       <WaterCard />
 
-      <Link href="/checkin" className="card block p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="eyebrow">Check-in semanal</p>
-            <p className="mt-1 text-sm">
-              {checkinSent ? "Enviado esta semana ✓" : "Pendiente esta semana"}
+      {/* ---------- Check-in y Mensajes ---------- */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/checkin" className="card block">
+          <ClipboardCheck {...ICON} className={d.checkinSent ? "text-ok" : "text-muted"} />
+          <p className="eyebrow mt-3">Check-in</p>
+          <p className={`mt-1 font-display text-[22px] font-bold uppercase leading-none ${d.checkinSent ? "text-ok" : ""}`}>
+            {d.checkinSent ? "Enviado" : "Pendiente"}
+          </p>
+          <p className="mt-1.5 text-xs text-muted">Esta semana</p>
+        </Link>
+        <Link href="/mensajes" className="card block">
+          <MessageCircle {...ICON} className={d.unread > 0 ? "text-accent" : "text-muted"} />
+          <p className="eyebrow mt-3">Mensajes</p>
+          <p className={`mt-1 font-display text-[22px] font-bold uppercase leading-none ${d.unread > 0 ? "text-accent" : ""}`}>
+            {d.unread > 0 ? `${d.unread} sin leer` : "Al día"}
+          </p>
+          <p className="mt-1.5 text-xs text-muted">{d.unread > 0 ? "De tu entrenadora" : "Escribe a tu entrenadora"}</p>
+        </Link>
+      </div>
+
+      {/* ---------- Agenda y último peso: filas-tarjeta ---------- */}
+      <div className="space-y-3">
+        <Link href="/agenda" className="card flex items-center gap-3">
+          <CalendarDays {...ICON} className="shrink-0 text-muted" />
+          <div className="min-w-0 flex-1">
+            <p className="eyebrow">Agenda</p>
+            <p className="mt-1 truncate text-sm">
+              {d.nextAppt ? `Próxima cita: ${formatWhen(d.nextAppt.starts_at)}` : "Ver tu calendario"}
             </p>
           </div>
-          <span className={`rounded-full px-3 py-1.5 text-xs font-medium ${checkinSent ? "bg-ok/15 text-ok" : "border border-line"}`}>
-            {checkinSent ? "Hecho" : "Completar"}
-          </span>
-        </div>
-      </Link>
-
-      {lastWeight != null && (
-        <Link href="/progreso" className="card block p-4">
-          <div className="flex items-baseline justify-between">
-            <p className="eyebrow">Último peso</p>
-            <span className="figure text-sm">{lastWeight} kg</span>
-          </div>
+          {d.pendingAppt > 0 ? (
+            <span className="shrink-0 rounded-full bg-accent px-2.5 py-1 font-display text-xs font-bold text-accent-ink">
+              {d.pendingAppt}
+            </span>
+          ) : (
+            <ChevronRight {...ICON} className="shrink-0 text-muted" />
+          )}
         </Link>
-      )}
+
+        {d.lastWeight != null && (
+          <Link href="/progreso" className="card flex items-center gap-3">
+            <Scale {...ICON} className="shrink-0 text-muted" />
+            <p className="eyebrow flex-1">Último peso</p>
+            <span className="figure text-xl uppercase">{fmtNum(d.lastWeight)} kg</span>
+            <ChevronRight {...ICON} className="shrink-0 text-muted" />
+          </Link>
+        )}
+      </div>
     </main>
   );
 }

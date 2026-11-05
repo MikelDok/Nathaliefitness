@@ -1,32 +1,40 @@
 @import "tailwindcss";
 
+/* Fuentes (next/font en el layout raíz): Barlow Condensed para títulos,
+   cifras, etiquetas y botones; Manrope para el texto. */
+@theme inline {
+  --font-display: var(--font-barlow), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
 @theme {
-  /* Marca NEA FITNESS: negro cálido + rose gold del logo */
-  --color-bg: #0f0c0d;
-  --color-surface: #191416;
-  --color-raised: #221b1e;
-  --color-line: #2e2528;
-  --color-ink: #f4eeec;
-  --color-muted: #a3969a;
+  /* Marca NEA FITNESS: negro neutro + rose gold del logo. Deportivo y minimalista.
+     surface se separa del fondo ~1,15:1 (las tarjetas no llevan borde) y raised un escalón más. */
+  --color-bg: #0b0b0c;
+  --color-surface: #1c1c1f;
+  --color-raised: #25252a;
+  --color-line: #2a2a2f;
+  --color-ink: #f5f2ef;
+  --color-muted: #8e8e94;       /* ≥ 4,5:1 también sobre raised */
   --color-accent: #dfa08f;      /* rose gold */
-  --color-accent-ink: #2b1410;
+  --color-accent-ink: #1a0f0b;
   --color-ok: #7fc29b;
-  --color-danger: #f5a3a3;     /* errores y avisos de riesgo */
+  --color-danger: #f5a3a3;      /* errores y avisos de riesgo */
 }
 
 /* Tema claro: mismos tokens redefinidos; todo lo que usa var(--color-…) cambia solo.
    Contraste AA (≥ 4,5:1) de ink, muted, accent, ok y danger sobre bg, surface y raised. */
 html[data-theme="light"] {
-  --color-bg: #faf7f5;          /* blanco roto cálido */
-  --color-surface: #ffffff;
-  --color-raised: #f1ebe8;
-  --color-line: #e2d8d4;
-  --color-ink: #2a2326;         /* grafito */
-  --color-muted: #6e6266;
-  --color-accent: #96503f;      /* rose gold profundo: el claro original no llega a AA sobre blanco */
+  --color-bg: #f7f7f6;          /* blanco roto neutro */
+  --color-surface: #e7e7e4;
+  --color-raised: #dbdbd7;
+  --color-line: #d0d0cb;
+  --color-ink: #18181a;
+  --color-muted: #5a5a61;
+  --color-accent: #844334;      /* rose gold profundo: AA también sobre su tinte al 15 % */
   --color-accent-ink: #ffffff;
-  --color-ok: #2a7349;
-  --color-danger: #b3261e;
+  --color-ok: #266a43;
+  --color-danger: #a11f18;
   color-scheme: light;
 }
 
@@ -36,23 +44,58 @@ html { background: var(--color-bg); color-scheme: dark; }
    una placa oscura redondeada, igual que un icono de app. */
 html[data-theme="light"] .logo-mark {
   border-radius: 1.75rem;
-  box-shadow: 0 10px 30px -12px rgb(42 35 38 / 0.45);
+  box-shadow: 0 10px 30px -12px rgb(24 24 26 / 0.45);
 }
 
 body {
   background: var(--color-bg);
   color: var(--color-ink);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Cifras protagonistas: peso, kg, macros */
-.figure { font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+/* Títulos de pantalla: display en mayúsculas. En capas (base/components)
+   para que las utilidades de Tailwind (p-6, text-ok…) sigan pudiendo ajustarlas. */
+@layer base {
+h1 { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: -0.01em; line-height: 1; }
+}
 
-/* Etiqueta superior de seccion */
-.eyebrow { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; color: var(--color-muted); }
+@layer components {
+/* Cifras protagonistas: peso, kg, macros (32–40 px en las grandes) */
+.figure { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 1; }
 
-.card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 16px; }
+/* Etiqueta superior de sección */
+.eyebrow { font-family: var(--font-display); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; color: var(--color-muted); }
+
+/* Tarjeta: solo para bloques de acción. Las listas de información van planas,
+   con separadores finos (divide-line), sin tarjeta. */
+.card { background: var(--color-surface); border-radius: 14px; padding: 16px; }
+
+/* Botón principal: píldora accent, 44 px */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 44px; padding: 0 1.5rem; border-radius: 9999px;
+  background: var(--color-accent); color: var(--color-accent-ink);
+  font-family: var(--font-display); font-weight: 700; font-size: 15px;
+  text-transform: uppercase; letter-spacing: 0.12em;
+}
+.btn-primary:disabled { opacity: 0.6; }
+
+/* Chips de filtro: el activo con fondo accent, los inactivos solo texto */
+.chip {
+  display: inline-flex; align-items: center; min-height: 32px; padding: 0 0.875rem; border-radius: 9999px;
+  font-family: var(--font-display); font-weight: 600; font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--color-muted);
+}
+.chip-active { background: var(--color-accent); color: var(--color-accent-ink); }
+
+/* Campo de formulario sin borde */
+.field {
+  width: 100%; border-radius: 12px; background: var(--color-surface);
+  padding: 0.875rem 1rem; font-size: 14px; color: var(--color-ink);
+}
+.field::placeholder { color: var(--color-muted); }
+}
 
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 

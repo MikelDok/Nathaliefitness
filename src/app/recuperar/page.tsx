@@ -54,12 +54,12 @@ export default function Recuperar() {
           <input
             type="email" value={email} onChange={(e) => setEmail(e.target.value)}
             placeholder="Correo electrónico" autoComplete="email" required
-            className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
+            className="field"
           />
           {error && <p role="alert" className="text-xs text-danger">{error}</p>}
           <button
             type="submit" disabled={loading}
-            className="w-full rounded-full bg-accent py-3.5 font-semibold text-accent-ink disabled:opacity-60"
+            className="btn-primary w-full"
           >
             {loading ? "Enviando…" : "Enviar enlace"}
           </button>

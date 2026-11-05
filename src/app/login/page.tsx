@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Lock, Mail } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { homePath } from "@/lib/auth";
 
@@ -44,21 +45,29 @@ export default function Login() {
       <p className="eyebrow mt-6 text-center tracking-[0.22em]">
         Entrena · Avanza · Disfruta
       </p>
-      <div className="mt-8 space-y-3">
-        <input
-          type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-          placeholder="Correo electrónico" autoComplete="email"
-          className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
-        />
-        <input
-          type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-          placeholder="Contraseña" autoComplete="current-password"
-          className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
-        />
+      <div className="mt-10 space-y-3">
+        <label className="relative block">
+          <Mail size={20} strokeWidth={1.75} aria-hidden
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+            placeholder="Correo electrónico" autoComplete="email" aria-label="Correo electrónico"
+            className="field pl-12"
+          />
+        </label>
+        <label className="relative block">
+          <Lock size={20} strokeWidth={1.75} aria-hidden
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+            placeholder="Contraseña" autoComplete="current-password" aria-label="Contraseña"
+            className="field pl-12"
+          />
+        </label>
         {error && <p className="text-xs text-danger">{error}</p>}
         <button
           onClick={submit} disabled={loading}
-          className="w-full rounded-full bg-accent py-3.5 font-semibold text-accent-ink disabled:opacity-60"
+          className="btn-primary w-full"
         >
           {loading ? "Entrando…" : "Iniciar sesión"}
         </button>

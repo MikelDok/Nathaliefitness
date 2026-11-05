@@ -61,18 +61,18 @@ export default function PasswordForm({
         type="password" value={password} onChange={(e) => setPassword(e.target.value)}
         placeholder={`Nueva contraseña (mín. ${MIN_PASSWORD} caracteres)`}
         autoComplete="new-password" minLength={MIN_PASSWORD} required
-        className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
+        className="field"
       />
       <input
         type="password" value={repeat} onChange={(e) => setRepeat(e.target.value)}
         placeholder="Repite la nueva contraseña"
         autoComplete="new-password" required
-        className="w-full rounded-xl border border-line bg-surface px-4 py-3.5 text-sm"
+        className="field"
       />
       {error && <p role="alert" className="text-xs text-danger">{error}</p>}
       <button
         type="submit" disabled={loading}
-        className="w-full rounded-full bg-accent py-3.5 font-semibold text-accent-ink disabled:opacity-60"
+        className="btn-primary w-full"
       >
         {loading ? "Guardando…" : submitLabel}
       </button>
