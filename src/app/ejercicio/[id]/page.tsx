@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import { Check, Trophy, VideoOff } from "lucide-react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { Check, ChevronRight, CloudOff, Trophy, VideoOff } from "lucide-react";
 import { CheckDot, ICON, PageHeader } from "@/components/ui";
 import BodyMap from "@/components/BodyMapLazy";
 import { viewOf, zonesOf } from "@/lib/muscles";
@@ -11,17 +12,31 @@ import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
 import { useRestTimer } from "@/lib/useRestTimer";
 import RestTimer from "@/components/RestTimer";
+import {
+  clearDraft, flushDrafts, keepsDraft, pushLog, readDraft, signature, toSets, writeDraft,
+  type LogSet, type SetRow,
+} from "@/lib/logDraft";
 
 /** Descanso cuando la entrenadora no ha indicado ninguno. */
 const DEFAULT_REST = 90;
+/** Espera tras editar reps/kg de una serie marcada antes de enviar. */
+const EDIT_DELAY = 800;
 
-type SetRow = { reps: number; kg: number; done: boolean };
+type Status = "idle" | "saving" | "saved" | "offline";
+type LogRow = { sets: LogSet[] | null; performed_at: string; note: string | null };
 
 function parseScheme(s: string): number[] {
   if (s.includes("/")) return s.split("/").map((n) => parseInt(n) || 10);
   const m = s.match(/^(\d+)\s*[xX]\s*(\d+)$/);
   if (m) return Array(parseInt(m[1])).fill(parseInt(m[2]));
   return [10, 10, 10];
+}
+
+/** Series de un registro por número (los antiguos no llevan `n`: cuenta su orden). */
+function byNumber(sets: LogSet[] | null): Map<number, LogSet> {
+  const m = new Map<number, LogSet>();
+  (sets || []).forEach((s, i) => m.set(s.n ?? i + 1, s));
+  return m;
 }
 
 export default function Ejercicio({ params }: { params: Promise<{ id: string }> }) {
@@ -34,33 +49,116 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
   const [rest, setRest] = useState<number | null>(null);
   const [video, setVideo] = useState<string | null>(null);
   const [pr, setPr] = useState<number | null>(null);
-  const [lastSets, setLastSets] = useState<{ reps: number; kg: number }[] | null>(null);
+  const [lastSets, setLastSets] = useState<LogSet[] | null>(null);
   const [sets, setSets] = useState<SetRow[]>([]);
   const [note, setNote] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [status, setStatus] = useState<Status>("idle");
+  const [next, setNext] = useState<string | null>(null);
   const [loading, setLoading] = useState(isReal);
   const timer = useRestTimer(id);
 
+  // Guardado automático. Los envíos son asíncronos: leen lo último de refs.
+  const setsRef = useRef<SetRow[]>([]);
+  const noteRef = useRef("");
+  /** sesión y día del registro (fijo al abrir: no se parte a medianoche); null en demo */
+  const ctx = useRef<{ uid: string; day: string } | null>(null);
+  /** firma de lo que hay en Supabase */
+  const savedSig = useRef("[]");
+  const inFlight = useRef(false);
+  const again = useRef(false);
+  const editTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** Deja el borrador local igual que la pantalla mientras Supabase no esté al día. */
+  const persistDraft = useCallback((rows: SetRow[], text: string) => {
+    const c = ctx.current;
+    if (!c) return;
+    if (signature(rows, text) !== savedSig.current || keepsDraft(rows, text)) {
+      writeDraft({ peId: id, day: c.day, rows, note: text });
+    } else clearDraft(id, c.day);
+  }, [id]);
+
+  /** Envía el estado actual; si ya hay un envío en marcha, repite al acabar. */
+  const sync = useCallback(async function run(): Promise<void> {
+    if (editTimer.current) { clearTimeout(editTimer.current); editTimer.current = null; }
+    const c = ctx.current;
+    const sb = getSupabase();
+    if (!c || !sb) return;
+    if (inFlight.current) { again.current = true; return; }
+    const rows = setsRef.current, text = noteRef.current;
+    const sig = signature(rows, text);
+    if (sig === savedSig.current) {
+      persistDraft(rows, text);
+      setStatus((s) => (s === "offline" ? "saved" : s));
+      return;
+    }
+    inFlight.current = true;
+    setStatus("saving");
+    const ok = await pushLog(sb, c.uid, { peId: id, day: c.day, rows, note: text });
+    inFlight.current = false;
+    if (ok) savedSig.current = sig;
+    persistDraft(setsRef.current, noteRef.current);
+    setStatus(ok ? "saved" : "offline");
+    if (again.current) {
+      again.current = false;
+      if (ok) await run();
+    }
+  }, [id, persistDraft]);
+
+  /** Aplica un cambio y decide cuándo enviarlo. */
+  function commit(rows: SetRow[], text: string, send: "now" | "later" | "none") {
+    setsRef.current = rows; noteRef.current = text;
+    setSets(rows); setNote(text);
+    if (!ctx.current) {
+      // demo: todo en memoria
+      if (!isReal && send !== "none") setStatus(toSets(rows).length ? "saved" : "idle");
+      return;
+    }
+    persistDraft(rows, text);
+    if (send === "now") void sync();
+    else if (send === "later") {
+      if (editTimer.current) clearTimeout(editTimer.current);
+      editTimer.current = setTimeout(() => void sync(), EDIT_DELAY);
+    }
+  }
+
+  // reintento al recuperar la conexión; al salir, lo que esté esperando se envía
   useEffect(() => {
+    const onOnline = () => void sync();
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      if (editTimer.current) void sync();
+    };
+  }, [sync]);
+
+  useEffect(() => {
+    ctx.current = null;
+    savedSig.current = "[]";
     if (!isReal) {
-      const ex = demo.exercises.find((e) => e.id === id) ?? demo.exercises[0];
+      const k = demo.exercises.findIndex((e) => e.id === id);
+      const ex = demo.exercises[k] ?? demo.exercises[0];
       const last = demo.lastLogs[ex.id];
       setName(ex.name); setMuscle(ex.muscle); setScheme(ex.scheme);
       setRest(ex.rest);
       setVideo(ex.video || null);
       setPr(last?.pr ?? null);
       setLastSets(last?.sets ?? null);
-      setSets(parseScheme(ex.scheme).map((reps, i) => ({ reps, kg: last?.sets[i]?.kg ?? 0, done: false })));
+      setNext(k >= 0 && k < demo.exercises.length - 1 ? demo.exercises[k + 1].id : null);
+      const rows = parseScheme(ex.scheme).map((reps, i) => ({ reps, kg: last?.sets[i]?.kg ?? 0, done: false }));
+      setsRef.current = rows; noteRef.current = "";
+      setSets(rows); setNote(""); setStatus("idle");
       return;
     }
     const sb = getSupabase();
     if (!sb) return;
     (async () => {
+      const day = new Date().toISOString().slice(0, 10);
+      // getSession no necesita red: si se abre sin conexión, el borrador sigue funcionando
+      const { data: { session } } = await sb.auth.getSession();
+      const uid = session?.user.id ?? null;
       const { data: pe } = await sb
         .from("program_exercises")
-        .select("id,set_scheme,set_type,rest_seconds,exercises(name,muscle_group,video_url)")
+        .select("id,program_id,week,day,set_scheme,set_type,rest_seconds,exercises(name,muscle_group,video_url)")
         .eq("id", id).maybeSingle();
       if (!pe) { setLoading(false); return; }
       const ex = pe.exercises as unknown as { name: string; muscle_group: string; video_url: string | null } | null;
@@ -70,59 +168,77 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
       setRest(pe.rest_seconds ?? null);
       setVideo(ex?.video_url || null);
 
-      const { data: logs } = await sb
-        .from("exercise_logs")
-        .select("sets, performed_at")
-        .eq("program_exercise_id", id)
-        .order("performed_at", { ascending: false });
-
-      const allSets = (logs || []).flatMap((l) => (l.sets as { reps: number; kg: number }[]) || []);
-      const maxKg = allSets.reduce((m, s) => Math.max(m, s.kg || 0), 0);
+      const [{ data: logs }, { data: dayRows }] = await Promise.all([
+        sb.from("exercise_logs")
+          .select("sets, performed_at, note")
+          .eq("program_exercise_id", id)
+          .order("performed_at", { ascending: false }),
+        // para "Siguiente ejercicio": los visibles del mismo día, en orden
+        sb.from("program_exercises").select("id")
+          .eq("program_id", pe.program_id).eq("week", pe.week).eq("day", pe.day)
+          .eq("hidden", false).order("position"),
+      ]);
+      const list = (logs as LogRow[]) || [];
+      const maxKg = list.flatMap((l) => l.sets || []).reduce((m, s) => Math.max(m, s.kg || 0), 0);
       setPr(maxKg > 0 ? maxKg : null);
-      const last = logs && logs[0] ? ((logs[0].sets as { reps: number; kg: number }[]) || null) : null;
-      setLastSets(last);
-      setSets(parseScheme(pe.set_scheme).map((reps, i) => ({ reps, kg: last?.[i]?.kg ?? 0, done: false })));
-      setLoading(false);
-    })();
-  }, [id, isReal]);
+      // "Última sesión": la última anterior a hoy (la de hoy es la que se está haciendo)
+      const last = list.find((l) => l.performed_at < day)?.sets ?? null;
+      setLastSets(last?.length ? last : null);
+      const ids = ((dayRows as { id: string }[]) || []).map((r) => r.id);
+      const k = ids.indexOf(id);
+      setNext(k >= 0 && k < ids.length - 1 ? ids[k + 1] : null);
 
-  const update = (i: number, field: "reps" | "kg", v: number) =>
-    setSets((s) => s.map((set, j) => (j === i ? { ...set, [field]: v } : set)));
-  const toggle = (i: number) =>
-    setSets((s) => s.map((set, j) => (j === i ? { ...set, done: !set.done } : set)));
+      const prev = byNumber(last);
+      let rows: SetRow[] = parseScheme(pe.set_scheme)
+        .map((reps, i) => ({ reps, kg: prev.get(i + 1)?.kg ?? 0, done: false }));
+      let text = "";
+      // si ya hay registro de hoy, se reconstruyen las series marcadas
+      const todayLog = list.find((l) => l.performed_at === day);
+      if (todayLog?.sets?.length) {
+        byNumber(todayLog.sets).forEach((s, n) => {
+          while (rows.length < n) rows.push({ reps: s.reps, kg: 0, done: false });
+          rows[n - 1] = { reps: s.reps, kg: s.kg, done: true };
+        });
+        text = todayLog.note ?? "";
+        savedSig.current = signature(rows, text);
+      }
+      // un borrador pendiente manda sobre lo guardado
+      const draft = readDraft(id, day);
+      if (draft) { rows = draft.rows; text = draft.note; }
+
+      if (uid) ctx.current = { uid, day };
+      setsRef.current = rows; noteRef.current = text;
+      setSets(rows); setNote(text);
+      setStatus(savedSig.current !== "[]" ? "saved" : "idle");
+      setLoading(false);
+      if (uid) {
+        if (draft) void sync();
+        void flushDrafts(sb, uid, { peId: id, day });
+      }
+    })();
+  }, [id, isReal, sync]);
+
+  const edit = (i: number, field: "reps" | "kg", v: number) => {
+    const cur = setsRef.current;
+    const rows = cur.map((s, j) => (j === i ? { ...s, [field]: v } : s));
+    // solo las series marcadas van a Supabase
+    commit(rows, noteRef.current, cur[i].done ? "later" : "none");
+  };
 
   const restSec = rest ?? DEFAULT_REST;
   const nextIdx = sets.findIndex((s) => !s.done);
   const nextSet = nextIdx >= 0 ? nextIdx + 1 : null;
 
-  /** ✓ de una serie: al marcarla arranca el descanso; en la última, no. */
+  /** ✓ de una serie: se guarda al momento; al marcarla arranca el descanso (en la última, no). */
   function checkSet(i: number) {
     timer.unlock(); // iOS: el audio se desbloquea dentro de un toque
-    const marking = !sets[i].done;
-    toggle(i);
+    const marking = !setsRef.current[i].done;
+    const rows = setsRef.current.map((s, j) => (j === i ? { ...s, done: !s.done } : s));
+    commit(rows, noteRef.current, "now");
     if (!marking) return;
-    const doneAfter = sets.filter((s, j) => j === i || s.done).length;
-    if (doneAfter === sets.length) timer.complete();
-    else timer.start(restSec, `tras la serie ${i + 1} de ${sets.length}`);
-  }
-
-  async function save() {
-    setErr(null);
-    if (!isReal) { setSaved(true); return; }
-    const sb = getSupabase();
-    if (!sb) return;
-    setSaving(true);
-    const { data: u } = await sb.auth.getUser();
-    const { error } = await sb.from("exercise_logs").insert({
-      client_id: u.user!.id,
-      program_exercise_id: id,
-      performed_at: new Date().toISOString().slice(0, 10),
-      sets: sets.map(({ reps, kg }) => ({ reps, kg })),
-      note: note.trim() || null,
-    });
-    setSaving(false);
-    if (error) { setErr("No se pudo guardar. Comprueba tu conexión e inténtalo de nuevo."); return; }
-    setSaved(true);
+    const doneAfter = rows.filter((s) => s.done).length;
+    if (doneAfter === rows.length) timer.complete();
+    else timer.start(restSec, `tras la serie ${i + 1} de ${rows.length}`);
   }
 
   if (loading) {
@@ -159,6 +275,10 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
       )}
 
       <section>
+        <div className="mb-2 flex min-h-5 items-center justify-between gap-3">
+          <h2 className="eyebrow">Series</h2>
+          <SaveStatus status={status} />
+        </div>
         <div className="grid grid-cols-[20px_1fr_1fr_40px] items-center gap-3 border-b border-line pb-2">
           <span aria-hidden className="eyebrow">#</span>
           <span className="eyebrow">Repeticiones</span>
@@ -169,11 +289,11 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
           <div key={i} className="grid grid-cols-[20px_1fr_1fr_40px] items-center gap-3 border-b border-line py-2">
             <span className="figure text-base text-muted">{i + 1}</span>
             <input type="number" inputMode="numeric" value={s.reps || ""}
-              onChange={(e) => update(i, "reps", +e.target.value)}
+              onChange={(e) => edit(i, "reps", +e.target.value)}
               aria-label={`Repeticiones serie ${i + 1}`}
               className="field figure py-2.5 text-center text-lg" />
             <input type="number" inputMode="decimal" step="0.5" value={s.kg || ""}
-              onChange={(e) => update(i, "kg", +e.target.value)}
+              onChange={(e) => edit(i, "kg", +e.target.value)}
               aria-label={`Peso serie ${i + 1}`}
               className="field figure py-2.5 text-center text-lg" />
             <button onClick={() => checkSet(i)} aria-pressed={s.done} aria-label={`Marcar serie ${i + 1}`}
@@ -187,19 +307,37 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
             Última sesión: {lastSets.map((s) => `${s.reps}×${fmtNum(s.kg)} kg`).join(" · ")}
           </p>
         )}
-        <textarea value={note} onChange={(e) => setNote(e.target.value)}
+        <textarea value={note} onChange={(e) => commit(setsRef.current, e.target.value, "none")}
+          onBlur={() => void sync()}
           placeholder="Añade una nota para tu entrenadora" rows={2}
           className="field mt-4" />
-        {err && <p className="mt-2 text-xs text-danger">{err}</p>}
-        <button onClick={save} disabled={saving || saved} className="btn-primary mt-4 w-full">
-          {saved ? <><Check size={18} strokeWidth={2.5} aria-hidden /> Guardado</> : saving ? "Guardando…" : "Guardar registro"}
-        </button>
-        {saved && isReal && (
-          <p className="mt-2 text-center text-xs text-ok">Registro guardado en tu historial.</p>
-        )}
+        <Link href={next ? `/ejercicio/${next}` : "/entreno"} className="btn-primary mt-4 w-full">
+          {next
+            ? <>Siguiente ejercicio <ChevronRight size={18} strokeWidth={2.25} aria-hidden /></>
+            : "Volver al entreno"}
+        </Link>
       </section>
 
       <RestTimer timer={timer} rest={restSec} nextSet={nextSet} />
     </main>
+  );
+}
+
+/** Indicador discreto del guardado automático. */
+function SaveStatus({ status }: { status: Status }) {
+  return (
+    <p role="status" aria-live="polite" className="flex items-center gap-1 text-xs">
+      {status === "saving" && <span className="text-muted">Guardando…</span>}
+      {status === "saved" && (
+        <span className="flex items-center gap-1 text-ok">
+          <Check size={14} strokeWidth={2.5} aria-hidden /> Guardado
+        </span>
+      )}
+      {status === "offline" && (
+        <span className="flex items-center gap-1 text-danger">
+          <CloudOff size={14} strokeWidth={2} aria-hidden /> Sin conexión, se guardará al volver
+        </span>
+      )}
+    </p>
   );
 }

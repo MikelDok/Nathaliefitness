@@ -8,6 +8,7 @@ import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
 import { CheckDot, EmptyState, ICON, PageHeader, chip } from "@/components/ui";
 import MuscleDay from "@/components/MuscleDay";
+import { allDrafts, flushDrafts, toSets } from "@/lib/logDraft";
 
 /** Acceso a la guía de ejercicios (cabecera de Entreno). */
 const guiaLink = (
@@ -65,6 +66,9 @@ export default function Entreno() {
         .limit(1).maybeSingle();
       if (!p) { setLoading(false); return; }
       setProgram(p);
+      // series guardadas sin conexión: se envían antes de mirar qué está hecho hoy
+      await flushDrafts(sb, uid);
+      const today = new Date().toISOString().slice(0, 10);
       const [{ data: pe }, { data: logs }] = await Promise.all([
         sb.from("program_exercises")
           .select("id,week,day,position,set_scheme,set_type,exercises(name,muscle_group)")
@@ -72,10 +76,12 @@ export default function Entreno() {
         sb.from("exercise_logs")
           .select("program_exercise_id")
           .eq("client_id", uid)
-          .eq("performed_at", new Date().toISOString().slice(0, 10)),
+          .eq("performed_at", today),
       ]);
       setRows((pe as unknown as Row[]) || []);
-      setDoneIds(new Set((logs || []).map((l) => l.program_exercise_id)));
+      // hecho = registrado hoy (desde la primera serie), también si sigue pendiente de enviar
+      const pending = allDrafts().filter((d) => d.day === today && toSets(d.rows).length).map((d) => d.peId);
+      setDoneIds(new Set([...(logs || []).map((l) => l.program_exercise_id), ...pending]));
       setLoading(false);
     })();
   }, []);

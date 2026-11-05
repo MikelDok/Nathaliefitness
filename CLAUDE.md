@@ -141,6 +141,20 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   `profiles.coach_id`. Ficheros del chat en el bucket privado `chat-media`,
   carpeta `{client_id}/…`, controlados por `in_chat_thread()`.
 - Citas: no se borran (sin policy de delete); se cancelan con `status`.
+- Registro de series (`exercise_logs`): **un registro por clienta, ejercicio
+  del programa y día** (índice único, 0015) y **guardado automático** desde
+  el detalle de ejercicio (`src/lib/logDraft.ts`): el primer ✓ crea el
+  registro (upsert), los siguientes lo actualizan y desmarcar todas lo borra;
+  reps/kg de una serie marcada se envían 0,8 s después de editar y la nota al
+  salir del campo. `sets` guarda **solo las series marcadas** como
+  `{reps, kg, n}` (`n` = nº de serie; los registros antiguos no lo llevan y
+  todos los lectores usan solo `reps`/`kg`). Mientras Supabase no confirma,
+  borrador en `localStorage["nea:log:{ejercicio}:{día}"]`; se reenvía al
+  volver la conexión, al siguiente ✓, al abrir cualquier ejercicio o Entreno.
+  Entreno da un ejercicio por hecho desde la primera serie (también si está
+  pendiente de enviar). "Última sesión" es la última anterior a hoy. El botón
+  final es "Siguiente ejercicio" (siguiente visible del día) o "Volver al
+  entreno".
 - Programa activo: como mucho uno por clienta, vía RPC `set_active_program` (0008).
 - Medidas: definición única en `src/lib/measurements.ts` (formulario, ficha,
   Excel e informe); añadir una medida = tocar ese archivo + una migración.
@@ -228,8 +242,9 @@ re-ejecutables (`if not exists`, `drop policy if exists`, `on conflict`).
 | 0012 | `client_notes`, `water_logs`, `profiles.water_goal_ml` + permisos de columna en `profiles`, `program_exercises.hidden` |
 | 0013 | Buzón de sugerencias (`suggestions`, permisos de columna) y FAQs (`faqs`) |
 | 0014 | Planes de comida por semanas: `meal_plans.weeks` (1-4), `meal_plans.starts_on`, `meals.week` |
+| 0015 | Un registro por clienta, ejercicio y día en `exercise_logs` (borra duplicados previos conservando el más reciente + índice único) |
 
-**La siguiente es `0015_…`.**
+**La siguiente es `0016_…`.**
 
 ## Variables de entorno (`.env.local`, y las mismas en Vercel)
 ```
@@ -274,6 +289,8 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
   clienta y panel de la coach.
 - Mapa corporal: guía de ejercicios por músculo, "Hoy trabajas" y grupos
   Gemelos y Antebrazos en la biblioteca.
+- Guardado automático de series con borrador local y reintento sin conexión
+  (requiere la 0015 aplicada).
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los
