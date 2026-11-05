@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Droplet, Minus } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
+import { localDay } from "@/lib/dates";
 
 const GLASS = 250;          // ml por toque
 const GOAL_STEP = 250;      // ajuste del objetivo
 const GOAL_MIN = 500, GOAL_MAX = 6000; // igual que el check de profiles.water_goal_ml
 
 /** Mismo criterio de "hoy" que hábitos y registros de entreno. */
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDay();
 const liters = (ml: number) =>
   (ml / 1000).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 

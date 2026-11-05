@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarX2, ChevronRight, Dumbbell, PersonStanding } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
+import { localDay } from "@/lib/dates";
 import { demo } from "@/lib/demo-data";
 import { CheckDot, EmptyState, ICON, PageHeader, chip } from "@/components/ui";
 import MuscleDay from "@/components/MuscleDay";
@@ -68,7 +69,7 @@ export default function Entreno() {
       setProgram(p);
       // series guardadas sin conexión: se envían antes de mirar qué está hecho hoy
       await flushDrafts(sb, uid);
-      const today = new Date().toISOString().slice(0, 10);
+      const today = localDay();
       const [{ data: pe }, { data: logs }] = await Promise.all([
         sb.from("program_exercises")
           .select("id,week,day,position,set_scheme,set_type,exercises(name,muscle_group)")

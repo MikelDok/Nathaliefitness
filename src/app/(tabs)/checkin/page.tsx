@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
+import { localMonday, parseLocalDay } from "@/lib/dates";
 import { Check } from "lucide-react";
 import { PageHeader } from "@/components/ui";
 
@@ -22,15 +23,8 @@ const fields: { key: "energy" | "sleep" | "hunger" | "stress" | "training_feel";
   { key: "training_feel", label: "Sensaciones entrenando", low: "Flojas", high: "Fuertes" },
 ];
 
-function mondayOf(d: Date): string {
-  const x = new Date(d);
-  const day = (x.getDay() + 6) % 7; // lunes=0
-  x.setDate(x.getDate() - day);
-  return x.toISOString().slice(0, 10);
-}
-
 export default function Checkin() {
-  const week = mondayOf(new Date());
+  const week = localMonday();
   const [values, setValues] = useState<Record<string, number>>({
     energy: 3, sleep: 3, hunger: 3, stress: 3, training_feel: 3,
   });
@@ -149,7 +143,7 @@ export default function Checkin() {
             {history.filter((c) => c.coach_reply).map((c) => (
               <li key={c.id} className="py-3.5">
                 <p className="text-xs text-muted">
-                  Semana del {new Date(c.week_start).toLocaleDateString("es-ES")}
+                  Semana del {parseLocalDay(c.week_start).toLocaleDateString("es-ES")}
                 </p>
                 <p className="mt-1 text-sm">{c.coach_reply}</p>
               </li>

@@ -2,6 +2,7 @@
 // pestaña Progreso de la clienta y la ficha de la coach.
 
 import type { Measurement, MeasurementKey } from "@/lib/measurements";
+import { localDay, parseLocalDay } from "@/lib/dates";
 
 /** Un punto de una serie: fecha YYYY-MM-DD y valor. */
 export type Point = { date: string; value: number };
@@ -24,20 +25,10 @@ export type LoadLog = {
 /** Serie de cargas de un ejercicio: kg máximo por sesión. */
 export type LoadSeries = { name: string; points: Point[]; pr: number; prDate: string; sessions: number };
 
-/**
- * "2026-11-04" → fecha local a medianoche. new Date("2026-11-04") la
- * interpreta en UTC y en España podría mostrar el día anterior.
- */
-export function parseDay(iso: string): Date {
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
-}
-
-/** Fecha local → "YYYY-MM-DD". */
-export function toDay(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
+/** "2026-11-04" → fecha local a medianoche (alias de `parseLocalDay`, src/lib/dates). */
+export const parseDay = parseLocalDay;
+/** Fecha local → "YYYY-MM-DD" (alias de `localDay`, src/lib/dates). */
+export const toDay = localDay;
 
 /** Puntos dentro del rango (desde hoy hacia atrás). Mantiene el orden. */
 export function filterRange(points: Point[], range: Range, now = new Date()): Point[] {

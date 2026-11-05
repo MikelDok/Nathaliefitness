@@ -2,6 +2,7 @@
 // igual que en el chat.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { localDay, parseLocalDay } from "@/lib/dates";
 
 export type AppointmentKind = "presencial" | "videollamada" | "otro";
 
@@ -47,16 +48,11 @@ export const WEEKDAYS = [
 // Todo se calcula sobre la fecha LOCAL. Pasar por UTC cambiaría el día en
 // según qué franja horaria.
 
-/** "YYYY-MM-DD" de una fecha local. */
-export function dateKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+/** "YYYY-MM-DD" de una fecha local (alias de `localDay`, src/lib/dates). */
+export const dateKey = localDay;
 
-/** "YYYY-MM-DD" -> Date local a medianoche (no new Date(str), que asume UTC). */
-export function parseDateKey(s: string): Date {
-  const [y, m, d] = s.split("-").map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
-}
+/** "YYYY-MM-DD" -> Date local a medianoche (alias de `parseLocalDay`). */
+export const parseDateKey = parseLocalDay;
 
 /** 1 = lunes … 7 = domingo. */
 export function isoWeekday(d: Date): number {

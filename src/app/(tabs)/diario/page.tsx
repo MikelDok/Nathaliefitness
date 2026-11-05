@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
+import { localDay } from "@/lib/dates";
 import BarcodeScanner from "@/components/BarcodeScanner";
 
 type Entry = {
@@ -17,7 +18,7 @@ type Product = {
 type Target = { kcal_target: number | null; protein_g: number | null; fat_g: number | null; carbs_g: number | null };
 
 export default function Diario() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDay();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [target, setTarget] = useState<Target | null>(null);
   const [scanning, setScanning] = useState(false);

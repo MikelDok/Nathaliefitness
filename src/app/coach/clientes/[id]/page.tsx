@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Avatar, ICON } from "@/components/ui";
 import { getSupabase } from "@/lib/supabase";
+import { addDays, localDay, parseLocalDay } from "@/lib/dates";
 import {
   SELECT, usedFields, toExportRows, formatDate, type Measurement,
 } from "@/lib/measurements";
@@ -106,8 +107,9 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
     }
     setPhotos(shared);
 
-    const since = new Date(); since.setDate(since.getDate() - 6);
-    const sinceStr = since.toISOString().slice(0, 10);
+    // los 7 últimos días de calendario (locales, como los guarda la clienta)
+    const since = addDays(new Date(), -6);
+    const sinceStr = localDay(since);
     const { data: hb } = await sb.from("habits").select("id,title,active")
       .eq("client_id", id).order("title");
     const ids = (hb || []).map((h) => h.id);
@@ -117,10 +119,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
         : Promise.resolve({ data: [] as { habit_id: string; logged_on: string }[] }),
       sb.from("water_logs").select("logged_on,ml").eq("client_id", id).gte("logged_on", sinceStr),
     ]);
-    const days: string[] = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(since); d.setDate(since.getDate() + i);
-      return d.toISOString().slice(0, 10);
-    });
+    const days: string[] = Array.from({ length: 7 }, (_, i) => localDay(addDays(since, i)));
     setHabits(((hb || []) as { id: string; title: string; active: boolean }[]).map((h) => ({
       ...h,
       week: days.map((d) => (hl || []).some((l) => l.habit_id === h.id && l.logged_on === d)),
@@ -187,7 +186,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
     const slug = (profile?.full_name || "clienta").toLowerCase()
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    XLSX.writeFile(wb, `medidas-${slug}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `medidas-${slug}-${localDay()}.xlsx`);
     setExporting(false);
   }
 
@@ -421,7 +420,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
               {checkins.map((c) => (
                 <li key={c.id} className="py-4">
                   <p className="flex items-center gap-2 text-sm font-medium">
-                    Semana del {new Date(c.week_start).toLocaleDateString("es-ES")}
+                    Semana del {parseLocalDay(c.week_start).toLocaleDateString("es-ES")}
                     {!c.coach_reply && (
                       <span className="chip min-h-6 bg-accent/15 px-2.5 text-[10px] text-accent">Sin responder</span>
                     )}
@@ -468,7 +467,7 @@ export default function FichaCliente({ params }: { params: Promise<{ id: string 
                       {l.program_exercises?.exercises?.name || "Ejercicio"}
                     </p>
                     <span className="shrink-0 text-xs text-muted">
-                      {new Date(l.performed_at).toLocaleDateString("es-ES")}
+                      {parseLocalDay(l.performed_at).toLocaleDateString("es-ES")}
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted">

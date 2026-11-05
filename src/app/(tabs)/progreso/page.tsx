@@ -5,6 +5,7 @@ import { Camera, Eye, NotebookPen, Ruler } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { requireAuth } from "@/lib/config";
+import { localDay } from "@/lib/dates";
 import { demo, demoMeasurements, demoLoadLogs } from "@/lib/demo-data";
 import TrendPanel from "@/components/progress/TrendPanel";
 import MeasurePanel from "@/components/progress/MeasurePanel";
@@ -22,7 +23,7 @@ const angles = [
   { value: "back", label: "Espalda" },
 ];
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDay();
 
 export default function Progreso() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);

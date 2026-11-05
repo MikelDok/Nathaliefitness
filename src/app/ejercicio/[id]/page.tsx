@@ -9,6 +9,7 @@ import { viewOf, zonesOf } from "@/lib/muscles";
 import { fmtNum } from "@/lib/progress";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
+import { localDay } from "@/lib/dates";
 import { demo } from "@/lib/demo-data";
 import { useRestTimer } from "@/lib/useRestTimer";
 import RestTimer from "@/components/RestTimer";
@@ -152,7 +153,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
     const sb = getSupabase();
     if (!sb) return;
     (async () => {
-      const day = new Date().toISOString().slice(0, 10);
+      const day = localDay();
       // getSession no necesita red: si se abre sin conexión, el borrador sigue funcionando
       const { data: { session } } = await sb.auth.getSession();
       const uid = session?.user.id ?? null;

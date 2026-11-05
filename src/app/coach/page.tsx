@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, CalendarDays, ChevronRight, ClipboardCheck, MessageCircle, Users } from "lucide-react";
 import { Avatar, EmptyState, ICON, PageHeader } from "@/components/ui";
 import { getSupabase } from "@/lib/supabase";
+import { parseLocalDay } from "@/lib/dates";
 import { unreadByThread } from "@/lib/chat";
 import {
   APPOINTMENT_SELECT, pendingByThread, formatWhen, type Appointment,
@@ -269,7 +270,7 @@ export default function CoachDashboard() {
                     <Link href={`/coach/clientes/${ci.client_id}`} className="flex items-center justify-between gap-3 py-3">
                       <span className="truncate text-sm">{nameById(ci.client_id)}</span>
                       <span className="shrink-0 text-xs text-muted">
-                        semana {new Date(ci.week_start).toLocaleDateString("es-ES")}
+                        semana {parseLocalDay(ci.week_start).toLocaleDateString("es-ES")}
                       </span>
                     </Link>
                   </li>

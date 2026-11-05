@@ -179,6 +179,14 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   desarrollo y sigue a "Sistema"). Selector `ThemeSwitcher` en Perfil y en la
   cabecera del panel. El informe imprimible es papel blanco en ambos temas
   (sus hex son intencionados); el manifest se queda oscuro.
+- **Fechas de calendario en hora local**: `src/lib/dates.ts` es la fuente
+  única (`localDay`, `localMonday`, `parseLocalDay`, `addDays`) para
+  `performed_at`, `logged_on` (hábitos y agua), `week_start` (check-ins),
+  `measured_at`, `eaten_on` y los "hoy" de Inicio, Entreno y la agenda. Nunca
+  `toISOString().slice(0, 10)` (da el día en UTC: en España, entre las 00:00
+  y la 01:00/02:00 contaba como el día anterior) ni `new Date("YYYY-MM-DD")`
+  para mostrar una fecha. `toDay`/`parseDay` (progress) y
+  `dateKey`/`parseDateKey` (agenda) son alias de estas.
 - Cifras decimales en pantalla con coma: `fmtNum` / `fmtDelta` de
   `src/lib/progress.ts` (el Excel conserva números).
 - Gráficas de progreso: cálculos puros en `src/lib/progress.ts` (rangos,

@@ -8,6 +8,7 @@ import MuscleDay from "@/components/MuscleDay";
 import WaterCard from "@/components/WaterCard";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
+import { localDay, localMonday } from "@/lib/dates";
 import { demo } from "@/lib/demo-data";
 import { unreadTotal } from "@/lib/chat";
 import { fmtNum } from "@/lib/progress";
@@ -16,12 +17,6 @@ import {
   APPOINTMENT_SELECT, PLAN_SELECT, pendingTotal, sessionOn, formatWhen,
   type Appointment, type Plan,
 } from "@/lib/agenda";
-
-function mondayOf(d: Date): string {
-  const x = new Date(d);
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
-  return x.toISOString().slice(0, 10);
-}
 
 /** "JUEVES 5 NOV" (el eyebrow ya pone las mayúsculas). */
 function todayLabel(d = new Date()): string {
@@ -78,7 +73,7 @@ export default function Inicio() {
       const { data: u } = await sb.auth.getUser();
       const uid = u.user?.id;
       if (!uid) { setLoading(false); return; }
-      const today = new Date().toISOString().slice(0, 10);
+      const today = localDay();
       const [{ data: prog }, { count: logs }, { data: ci }, { data: ms }, { data: hb }, { data: hl }, unreadMsgs,
         { data: nextAp }, pendingAp, { data: prof }] = await Promise.all([
         // mismo criterio que la pestaña Entreno: el activo y, si no hay, el más reciente
@@ -88,7 +83,7 @@ export default function Inicio() {
         sb.from("exercise_logs").select("id", { count: "exact", head: true })
           .eq("client_id", uid).eq("performed_at", today),
         sb.from("check_ins").select("id").eq("client_id", uid)
-          .eq("week_start", mondayOf(new Date())).maybeSingle(),
+          .eq("week_start", localMonday()).maybeSingle(),
         sb.from("measurements").select("weight_kg").eq("client_id", uid)
           .not("weight_kg", "is", null).order("measured_at", { ascending: false }).limit(1).maybeSingle(),
         sb.from("habits").select("id,title").eq("client_id", uid).eq("active", true).order("title"),
@@ -134,7 +129,7 @@ export default function Inicio() {
     if (!requireAuth) return; // demo: solo en pantalla
     const sb = getSupabase();
     if (!sb) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDay();
     if (h.done) {
       await sb.from("habit_logs").delete().eq("habit_id", h.id).eq("logged_on", today);
     } else {
