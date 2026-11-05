@@ -6,6 +6,7 @@ import { CalendarDays, Check, ChevronRight, ClipboardCheck, MessageCircle, Scale
 import Ring from "@/components/Ring";
 import MuscleDay from "@/components/MuscleDay";
 import WaterCard from "@/components/WaterCard";
+import { InstallCard } from "@/components/Install";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { localDay, localMonday } from "@/lib/dates";
@@ -215,6 +216,9 @@ function TodayView({ data: d, onToggle }: { data: Today; onToggle: (h: Habit) =>
           {d.name.charAt(0) || "·"}
         </Link>
       </header>
+
+      {/* ---------- Instalar la app (solo móvil sin instalar; nunca con la bienvenida, que es otra ruta) ---------- */}
+      <InstallCard />
 
       {/* ---------- Héroe: anillo + sesión de hoy ---------- */}
       <section className="flex items-center gap-5" aria-label="Tu día">

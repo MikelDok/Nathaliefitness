@@ -3,6 +3,7 @@ import { Barlow_Condensed, Manrope } from "next/font/google";
 import "./globals.css";
 import ThemeSync from "@/components/ThemeSync";
 import { THEME_COLOR, THEME_SCRIPT } from "@/lib/theme";
+import { INSTALL_SCRIPT } from "@/lib/installScript";
 
 // Se autoalojan en el build: el navegador no pide nada a Google.
 const display = Barlow_Condensed({
@@ -34,6 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" data-theme="dark" className={`${display.variable} ${sans.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        {/* guarda el aviso nativo de instalación de Android para Inicio y Perfil */}
+        <script dangerouslySetInnerHTML={{ __html: INSTALL_SCRIPT }} />
       </head>
       <body className="min-h-dvh">
         <ThemeSync />

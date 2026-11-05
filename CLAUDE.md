@@ -77,6 +77,8 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
     paneles de progreso, `ThemeSwitcher`) ya usan el sistema nuevo.
   - `Ring`: 108 px, trazo 12, sin halo, accent (ok con `done`). Frase del día
     de Inicio en `src/lib/quotes.ts` (7, una por día de la semana).
+  Los títulos que reciben el foco por código (`h1[tabindex="-1"]`) no
+  muestran anillo de foco.
 - **Supabase** (`@supabase/supabase-js` 2.112): Auth email+contraseña,
   Postgres con RLS, Storage, Realtime (chat).
 - Otras: `lucide-react` (iconos), `react-muscle-highlighter` (mapa corporal),
@@ -97,7 +99,8 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
   las pantallas usan `src/lib/demo-data.ts`. `NEXT_PUBLIC_REQUIRE_AUTH=false`
   fuerza la demo aunque haya Supabase (`src/lib/config.ts`).
 - Protección de rutas en cliente: `AuthGate` (pestañas de clienta: sin sesión →
-  `/login`, coach → `/coach`) y `CoachGate` (panel). `homePath()` en
+  `/login`, coach → `/coach`, clienta sin `profiles.onboarded_at` →
+  `/bienvenida`; si esa consulta falla, no redirige) y `CoachGate` (panel). `homePath()` en
   `src/lib/auth.ts` decide el destino según `profiles.role`.
 
 ## Estructura y rutas
@@ -108,6 +111,7 @@ src/app/
   nueva-contrasena/      Destino del enlace del correo (público)
   privacidad/            Política de privacidad piloto (público)
   creditos/              Licencias de terceros (público, lee THIRD_PARTY_NOTICES.md)
+  bienvenida/            Bienvenida de la clienta (3 pantallas; ?repaso=1 desde Perfil)
   (tabs)/                Clienta, con AuthGate + BottomNav
     page.tsx             Inicio
     entreno/  progreso/  nutricion/  diario/  compra/
@@ -228,6 +232,26 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   hoja inferior, sin registro), "Hoy trabajas" en Inicio y "Este día
   trabajas" en Entreno (`MuscleDay`, solo ejercicios visibles; no sale en
   descanso ni sin programa) y mini silueta en el detalle de ejercicio.
+- Bienvenida (`/bienvenida`, 0016): la primera vez que entra una clienta
+  (también las que ya usaban la app). Tres pantallas (hola de Nathalie, lo que
+  va a encontrar, objetivo + agua), con puntos de progreso, Atrás/Saltar,
+  deslizar y foco en el título de cada pantalla; las ocultas son `inert`.
+  Textos, foto opcional (`WELCOME_PHOTO`, si es null sale el logo) y opciones
+  de agua en `src/lib/welcome.ts`, para que Nathalie los cambie. "Empezar"
+  guarda `goals`, `water_goal_ml` y `onboarded_at`; "Saltar", solo
+  `onboarded_at`. Desde Perfil, `?repaso=1` no marca nada y vuelve a Perfil.
+  En demo, una vez por sesión del navegador (`sessionStorage`).
+- Instalación de la PWA: `src/lib/install.ts` (`useInstall`, detección
+  android / ios-safari / ios-otro / ordenador, "Ahora no" 7 días en
+  `localStorage["nea:install-snooze"]`) y `components/Install.tsx`
+  (`InstallGuide`, `InstallCard` en Inicio, `InstallRow` en Perfil). El
+  `beforeinstallprompt` de Android lo guarda `INSTALL_SCRIPT` en el `<head>`
+  del layout raíz (llega en el login, antes de montar Inicio). Instalada =
+  `display-mode: standalone`, `navigator.standalone` o `appinstalled`. No hay
+  service worker (irá con las notificaciones): si Chrome no ofrece el aviso
+  nativo, salen las instrucciones del menú ⋮. Para probar en escritorio,
+  solo en desarrollo: `localStorage["nea:install-debug"]` = `android`,
+  `android-prompt`, `ios-safari`, `ios-other` o `desktop`.
 - FAQs (`faqs`, 0013): la coach gestiona las suyas; la clienta lee solo las
   `published` de su coach (mismo patrón que `exercises`). Orden por `position`.
 
@@ -251,8 +275,9 @@ re-ejecutables (`if not exists`, `drop policy if exists`, `on conflict`).
 | 0013 | Buzón de sugerencias (`suggestions`, permisos de columna) y FAQs (`faqs`) |
 | 0014 | Planes de comida por semanas: `meal_plans.weeks` (1-4), `meal_plans.starts_on`, `meals.week` |
 | 0015 | Un registro por clienta, ejercicio y día en `exercise_logs` (borra duplicados previos conservando el más reciente + índice único) |
+| 0016 | `profiles.onboarded_at` (bienvenida vista) + `grant update (onboarded_at)` |
 
-**La siguiente es `0016_…`.**
+**La siguiente es `0017_…`.**
 
 ## Variables de entorno (`.env.local`, y las mismas en Vercel)
 ```
@@ -299,6 +324,8 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
   Gemelos y Antebrazos en la biblioteca.
 - Guardado automático de series con borrador local y reintento sin conexión
   (requiere la 0015 aplicada).
+- Fecha "de hoy" en hora local en toda la app (`src/lib/dates.ts`).
+- Bienvenida de 3 pantallas y aviso para instalar la app (requiere la 0016).
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los

@@ -1,13 +1,14 @@
 import Link from "next/link";
 import {
   Bell, CalendarDays, ChevronRight, ClipboardCheck, HelpCircle, Lightbulb, MessageCircle,
-  Palette, Salad, Shield, type LucideIcon,
+  Palette, Salad, Shield, Sparkles, type LucideIcon,
 } from "lucide-react";
 import ProfileName from "@/components/ProfileName";
 import LogoutButton from "@/components/LogoutButton";
 import ChangePassword from "@/components/ChangePassword";
 import GoalsEditor from "@/components/GoalsEditor";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import { InstallRow } from "@/components/Install";
 import { ICON } from "@/components/ui";
 import { demo } from "@/lib/demo-data";
 import { requireAuth } from "@/lib/config";
@@ -71,6 +72,8 @@ export default function Perfil() {
             </span>
           </li>
         ))}
+        <InstallRow />
+        <li><RowLink href="/bienvenida?repaso=1" Icon={Sparkles}>Ver la bienvenida de nuevo</RowLink></li>
         <li><RowLink href="/faqs" Icon={HelpCircle}>Preguntas frecuentes</RowLink></li>
         <li><RowLink href="/sugerencias" Icon={Lightbulb}>Sugerencias</RowLink></li>
         <li><RowLink href="/privacidad" Icon={Shield}>Privacidad y mis datos</RowLink></li>

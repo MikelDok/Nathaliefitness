@@ -109,6 +109,8 @@ h1 { font-family: var(--font-display); font-weight: 700; text-transform: upperca
 }
 
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+/* títulos que reciben el foco por código (cambio de pantalla): sin anillo, no son controles */
+h1[tabindex="-1"]:focus-visible { outline: none; }
 
 /* Impresión (informe de progreso de la ficha): papel blanco, sin cromo. */
 @media print {
