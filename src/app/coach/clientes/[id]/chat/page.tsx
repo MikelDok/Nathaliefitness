@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import Link from "next/link";
+import { PageHeader } from "@/components/ui";
 import Chat from "@/components/Chat";
 import { getSupabase } from "@/lib/supabase";
 
@@ -17,15 +17,8 @@ export default function ChatClienta({ params }: { params: Promise<{ id: string }
   }, [id]);
 
   return (
-    <main className="space-y-4">
-      <header className="flex items-center gap-3">
-        <Link href={`/coach/clientes/${id}`} aria-label="Volver a la ficha"
-          className="rounded-full border border-line p-2 text-muted">←</Link>
-        <div>
-          <p className="eyebrow">Mensajes</p>
-          <h1 className="text-xl font-bold">{name || "Clienta"}</h1>
-        </div>
-      </header>
+    <main className="mx-auto max-w-2xl space-y-7">
+      <PageHeader back={`/coach/clientes/${id}`} eyebrow="Mensajes" title={name || "Clienta"} />
 
       <Chat clientId={id} />
     </main>

@@ -16,10 +16,11 @@ export type Suggestion = {
 
 export const SUGGESTION_SELECT = "id,client_id,kind,body,screen,status,coach_reply,created_at";
 
-export const KINDS: { value: SuggestionKind; label: string; icon: string }[] = [
-  { value: "fallo", label: "Fallo", icon: "🐞" },
-  { value: "idea", label: "Idea", icon: "💡" },
-  { value: "otro", label: "Otro", icon: "💬" },
+// Los iconos de cada tipo están en src/components/icons.ts (lucide).
+export const KINDS: { value: SuggestionKind; label: string }[] = [
+  { value: "fallo", label: "Fallo" },
+  { value: "idea", label: "Idea" },
+  { value: "otro", label: "Otro" },
 ];
 
 export const STATUSES: { value: SuggestionStatus; label: string }[] = [

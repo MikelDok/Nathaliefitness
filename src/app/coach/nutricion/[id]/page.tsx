@@ -3,6 +3,8 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
+import { Copy, Plus, ShoppingCart, Trash2, UtensilsCrossed } from "lucide-react";
+import { EmptyState, ICON, PageHeader, chip } from "@/components/ui";
 import { MEAL_SLOTS as slots, MAX_MEAL_WEEKS, sortBySlot, currentWeek } from "@/lib/meals";
 
 type Plan = {
@@ -125,8 +127,8 @@ export default function EditorPlan({ params }: { params: Promise<{ id: string }>
       .update({ weeks: planWeeks, starts_on: startsOn || null }).eq("id", id);
     if (error) { setPlanMsg("No se pudo guardar la planificación (¿falta la migración 0014?)."); return; }
     setPlanMsg(startsOn
-      ? `Guardado ✓ Hoy toca la semana ${currentWeek(startsOn, planWeeks)}; la clienta la verá por defecto.`
-      : "Guardado ✓ Sin fecha de inicio, la clienta ve por defecto la semana 1.");
+      ? `Guardado. Hoy toca la semana ${currentWeek(startsOn, planWeeks)}; la clienta la verá por defecto.`
+      : "Guardado. Sin fecha de inicio, la clienta ve por defecto la semana 1.");
     load();
   }
 
@@ -134,134 +136,136 @@ export default function EditorPlan({ params }: { params: Promise<{ id: string }>
   if (!plan) return <p className="text-sm text-muted">Plan no encontrado.</p>;
 
   return (
-    <main className="space-y-6">
-      <header className="flex items-center gap-3">
-        <Link href="/coach/nutricion" aria-label="Volver" className="rounded-full border border-line p-2 text-muted">←</Link>
-        <div>
-          <h1 className="text-xl font-bold">{plan.title}</h1>
-          {plan.kcal_target && (
+    <main className="space-y-8">
+      <PageHeader back="/coach/nutricion" eyebrow="Plan de comidas" title={plan.title}
+        right={
+          <Link href={`/coach/nutricion/${id}/compra`} className="chip mt-1 shrink-0 gap-1.5 bg-surface text-ink">
+            <ShoppingCart size={16} strokeWidth={1.75} aria-hidden /> Lista de la compra
+          </Link>
+        }>
+        {plan.kcal_target
+          ? `Objetivo: ${plan.kcal_target} kcal · P ${plan.protein_g ?? "—"} · G ${plan.fat_g ?? "—"} · C ${plan.carbs_g ?? "—"}`
+          : null}
+      </PageHeader>
+
+      <div className="grid gap-8 lg:grid-cols-[3fr_2fr]">
+        {/* ---------- Día ---------- */}
+        <div className="min-w-0 space-y-5">
+          <div className="space-y-2">
+            {weeks > 1 && (
+              <div className="-mx-5 flex gap-1 overflow-x-auto px-5 lg:mx-0 lg:px-0" role="tablist" aria-label="Semanas">
+                {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => (
+                  <button key={w} onClick={() => setWeek(w)} role="tab" aria-selected={w === week} className={chip(w === week)}>
+                    Semana {w}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="-mx-5 flex gap-1 overflow-x-auto px-5 lg:mx-0 lg:px-0" role="tablist" aria-label="Días">
+              {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+                <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day} className={chip(d === day)}>
+                  Día {d}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <section>
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-2">
+              <p className="eyebrow">{weeks > 1 ? `Semana ${week} · ` : ""}Día {day} · {dayMeals.length} comidas</p>
+              <p className="text-xs text-muted">
+                <span className="figure text-sm text-ink">{tot("kcal")}</span> kcal · P {tot("protein_g")} · G {tot("fat_g")} · C {tot("carbs_g")}
+              </p>
+            </div>
+            {dayMeals.length === 0 ? (
+              <EmptyState icon={UtensilsCrossed}>Día vacío. Añade la primera comida.</EmptyState>
+            ) : (
+              <ul className="divide-y divide-line">
+                {dayMeals.map((m) => (
+                  <li key={m.id} className="flex items-start justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <p className="eyebrow">{m.slot}</p>
+                      <p className="mt-1 truncate text-sm font-medium">{m.name}</p>
+                      <p className="mt-0.5 text-xs text-muted">{m.kcal} kcal · P {m.protein_g} · G {m.fat_g} · C {m.carbs_g}</p>
+                    </div>
+                    <button onClick={() => remove(m.id)} aria-label={`Quitar ${m.name}`} title="Quitar"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:text-danger">
+                      <Trash2 {...ICON} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-3 flex flex-wrap gap-1">
+              <button onClick={copyDayToNext} className="chip gap-1.5 bg-surface text-ink">
+                <Copy size={14} strokeWidth={1.75} aria-hidden /> Copiar día {day} al {day + 1}
+              </button>
+              {week < weeks && (
+                <button onClick={copyWeekToNext} className="chip gap-1.5 bg-surface text-ink">
+                  <Copy size={14} strokeWidth={1.75} aria-hidden /> Copiar semana {week} a la {week + 1}
+                </button>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* ---------- Lateral: añadir y planificar ---------- */}
+        <div className="space-y-5">
+          <section className="card space-y-3">
+            <p className="eyebrow">Añadir comida {weeks > 1 ? `a la semana ${week}, día ${day}` : `al día ${day}`}</p>
+            <div className="flex gap-2">
+              <select value={slot} onChange={(e) => setSlot(e.target.value)} aria-label="Momento"
+                className="field w-auto bg-raised">
+                {slots.map((s) => <option key={s}>{s}</option>)}
+              </select>
+              <input value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="Nombre del plato" aria-label="Nombre del plato"
+                className="field min-w-0 flex-1 bg-raised" />
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[["kcal", kcal, setKcal], ["Prot", prot, setProt], ["Grasa", fat, setFat], ["Carbs", carbs, setCarbs]].map(([ph, v, set]) => (
+                <input key={ph as string} value={v as string}
+                  onChange={(e) => (set as (s: string) => void)(e.target.value)}
+                  type="number" inputMode="numeric" placeholder={ph as string} aria-label={`${ph} de la comida`}
+                  className="field figure min-w-0 bg-raised px-2 text-center text-base placeholder:font-sans placeholder:text-xs placeholder:font-normal" />
+              ))}
+            </div>
+            <textarea value={ingredients} onChange={(e) => setIngredients(e.target.value)}
+              placeholder={"Ingredientes (uno por línea):\n200 g lentejas\n100 g remolacha cocida"} rows={3}
+              aria-label="Ingredientes" className="field bg-raised" />
+            <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Instrucciones (opcional)" rows={2}
+              aria-label="Instrucciones" className="field bg-raised" />
+            {msg && <p className="text-xs text-accent">{msg}</p>}
+            <button onClick={add} className="btn-primary w-full">
+              <Plus size={18} strokeWidth={2.25} aria-hidden /> Añadir comida
+            </button>
+          </section>
+
+          <section className="card space-y-3">
+            <p className="eyebrow">Planificación</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-2 text-xs text-muted">
+                Semanas
+                <select value={planWeeks} onChange={(e) => setPlanWeeks(+e.target.value)}
+                  className="field w-auto bg-raised px-3 py-2">
+                  {Array.from({ length: MAX_MEAL_WEEKS }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </label>
+              <label className="flex flex-1 items-center gap-2 text-xs text-muted">
+                Empieza el
+                <input type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)}
+                  className="field min-w-0 flex-1 bg-raised py-2" />
+              </label>
+            </div>
             <p className="text-xs text-muted">
-              Objetivo: {plan.kcal_target} kcal · P {plan.protein_g ?? "—"} · G {plan.fat_g ?? "—"} · C {plan.carbs_g ?? "—"}
+              Con fecha de inicio, la clienta ve por defecto la semana que le toca (el plan rota al acabar).
             </p>
-          )}
+            <button onClick={savePlan} className="btn-primary w-full">Guardar planificación</button>
+            {planMsg && <p className="text-xs text-accent">{planMsg}</p>}
+          </section>
         </div>
-        <Link href={`/coach/nutricion/${id}/compra`}
-          className="ml-auto shrink-0 rounded-full border border-line px-3 py-2 text-xs font-medium">
-          🛒 Lista de la compra
-        </Link>
-      </header>
-
-      <section className="card p-4">
-        <p className="eyebrow">Planificación</p>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-muted">
-            Semanas
-            <select value={planWeeks} onChange={(e) => setPlanWeeks(+e.target.value)}
-              className="rounded-lg border border-line bg-bg px-2 py-2 text-sm text-ink">
-              {Array.from({ length: MAX_MEAL_WEEKS }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-xs text-muted">
-            Empieza el
-            <input type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)}
-              className="rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink" />
-          </label>
-          <button onClick={savePlan}
-            className="rounded-full bg-accent px-4 py-2 text-xs font-semibold text-accent-ink">
-            Guardar
-          </button>
-        </div>
-        <p className="mt-2 text-xs text-muted">
-          Con fecha de inicio, la clienta ve por defecto la semana que le toca (el plan rota al acabar).
-        </p>
-        {planMsg && <p className="mt-2 text-xs text-accent">{planMsg}</p>}
-      </section>
-
-      {weeks > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Semanas">
-          {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => (
-            <button key={w} onClick={() => setWeek(w)} role="tab" aria-selected={w === week}
-              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${w === week ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
-              Semana {w}
-            </button>
-          ))}
-        </div>
-      )}
-      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Días">
-        {[1,2,3,4,5,6,7].map((d) => (
-          <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${d === day ? (weeks > 1 ? "bg-raised" : "bg-accent text-accent-ink") : "border border-line text-muted"}`}>
-            Día {d}
-          </button>
-        ))}
       </div>
-
-      <section className="card p-4">
-        <div className="flex items-baseline justify-between">
-          <p className="eyebrow">{weeks > 1 ? `Semana ${week} · ` : ""}Día {day} · {dayMeals.length} comidas</p>
-          <p className="text-xs text-muted">
-            {tot("kcal")} kcal · P {tot("protein_g")} · G {tot("fat_g")} · C {tot("carbs_g")}
-          </p>
-        </div>
-        {dayMeals.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">Día vacío. Añade la primera comida abajo.</p>
-        ) : (
-          <ul className="mt-3 divide-y divide-line">
-            {dayMeals.map((m) => (
-              <li key={m.id} className="flex items-start justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="text-xs text-accent">{m.slot}</p>
-                  <p className="truncate text-sm">{m.name}</p>
-                  <p className="text-xs text-muted">{m.kcal} kcal · P {m.protein_g} · G {m.fat_g} · C {m.carbs_g}</p>
-                </div>
-                <button onClick={() => remove(m.id)}
-                  className="shrink-0 rounded-full border border-line px-3 py-1 text-xs text-muted">Quitar</button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="card space-y-3 p-4">
-        <p className="eyebrow">Añadir comida {weeks > 1 ? `a la semana ${week}, día ${day}` : `al día ${day}`}</p>
-        <div className="flex gap-2">
-          <select value={slot} onChange={(e) => setSlot(e.target.value)} aria-label="Momento"
-            className="rounded-lg border border-line bg-bg px-3 py-2.5 text-sm">
-            {slots.map((s) => <option key={s}>{s}</option>)}
-          </select>
-          <input value={name} onChange={(e) => setName(e.target.value)}
-            placeholder="Nombre del plato"
-            className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
-        </div>
-        <div className="grid grid-cols-4 gap-2">
-          {[["kcal", kcal, setKcal], ["Prot", prot, setProt], ["Grasa", fat, setFat], ["Carbs", carbs, setCarbs]].map(([ph, v, set]) => (
-            <input key={ph as string} value={v as string}
-              onChange={(e) => (set as (s: string) => void)(e.target.value)}
-              type="number" inputMode="numeric" placeholder={ph as string} aria-label={`${ph} de la comida`}
-              className="figure rounded-lg border border-line bg-bg px-2 py-2.5 text-center text-sm" />
-          ))}
-        </div>
-        <textarea value={ingredients} onChange={(e) => setIngredients(e.target.value)}
-          placeholder={"Ingredientes (uno por línea):\n200 g lentejas\n100 g remolacha cocida"} rows={3}
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
-        <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)}
-          placeholder="Instrucciones (opcional)" rows={2}
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
-        {msg && <p className="text-xs text-accent">{msg}</p>}
-        <div className="flex flex-wrap gap-2">
-          <button onClick={add} className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink">
-            Añadir comida
-          </button>
-          <button onClick={copyDayToNext} className="rounded-full border border-line px-5 py-2.5 text-sm text-muted">
-            Copiar día {day} → {day + 1}
-          </button>
-          {week < weeks && (
-            <button onClick={copyWeekToNext} className="rounded-full border border-line px-5 py-2.5 text-sm text-muted">
-              Copiar semana {week} → {week + 1}
-            </button>
-          )}
-        </div>
-      </section>
     </main>
   );
 }

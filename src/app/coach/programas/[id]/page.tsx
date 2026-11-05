@@ -1,8 +1,9 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
+import { Check, Copy, Dumbbell, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
+import { EmptyState, ICON, PageHeader, chip } from "@/components/ui";
 import { PLAN_SELECT, WEEKDAYS } from "@/lib/agenda";
 
 type Program = {
@@ -132,7 +133,7 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
     }).eq("id", id);
     if (error) { setPlanMsg("No se pudo guardar la planificación."); return; }
     setPlanMsg(startsOn
-      ? "Planificación guardada ✓ La clienta ya ve sus entrenos en el calendario."
+      ? "Planificación guardada. La clienta ya ve sus entrenos en el calendario."
       : "Sin fecha de inicio: los entrenos no se anclan a fechas.");
     load();
   }
@@ -160,150 +161,145 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
   if (!program) return <p className="text-sm text-muted">Programa no encontrado.</p>;
 
   return (
-    <main className="space-y-6">
-      <header className="flex items-center gap-3">
-        <Link href="/coach/programas" aria-label="Volver" className="rounded-full border border-line p-2 text-muted">←</Link>
-        <h1 className="text-xl font-bold">{program.title}</h1>
-      </header>
-
-      <section className="card p-4">
-        <p className="eyebrow">Planificación en el calendario (opcional)</p>
-        <p className="mt-2 text-xs text-muted">
-          Con una fecha de inicio y el día de la semana de cada sesión, la clienta ve
-          sus entrenos en su agenda y en Inicio le aparece qué le toca hoy.
-        </p>
-        <div className="mt-3 space-y-2">
-          <label className="flex flex-wrap items-center gap-2 text-xs text-muted">
-            Empieza el
-            <input type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)}
-              className="rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink" />
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {Array.from({ length: program.days_per_week }, (_, i) => i).map((i) => (
-              <label key={i} className="flex items-center gap-2 text-xs text-muted">
-                <span className="w-12 shrink-0">Día {i + 1}</span>
-                <select value={weekdays[i] ?? 1}
-                  onChange={(e) => setWeekdays((w) => {
-                    const next = [...w];
-                    next[i] = +e.target.value;
-                    return next;
-                  })}
-                  aria-label={`Día de la semana del Día ${i + 1}`}
-                  className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-2 py-2 text-sm text-ink">
-                  {WEEKDAYS.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
-                </select>
-              </label>
-            ))}
-          </div>
-          <button onClick={savePlan}
-            className="rounded-full bg-accent px-4 py-2 text-xs font-semibold text-accent-ink">
-            Guardar planificación
-          </button>
-          {planMsg && <p className="text-xs text-accent">{planMsg}</p>}
-        </div>
-      </section>
-
-      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Semanas">
-        {Array.from({ length: program.weeks }, (_, i) => i + 1).map((w) => (
-          <button key={w} onClick={() => setWeek(w)} role="tab" aria-selected={w === week}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${w === week ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
-            Semana {w}
-          </button>
-        ))}
-      </div>
-      <div className="flex gap-2" role="tablist" aria-label="Días">
-        {Array.from({ length: program.days_per_week }, (_, i) => i + 1).map((d) => (
-          <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium ${d === day ? "bg-raised" : "border border-line text-muted"}`}>
-            Día {d}
-          </button>
-        ))}
-      </div>
-
-      <section className="card p-4">
-        <p className="eyebrow">Sesión · Semana {week}, Día {day} ({dayRows.length} ejercicios)</p>
-        {dayRows.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">Sesión vacía. Añade el primer ejercicio abajo.</p>
-        ) : (
-          <ul className="mt-3 divide-y divide-line">
-            {dayRows.map((r, i) => (
-              <li key={r.id} className="flex items-center justify-between gap-3 py-3">
-                <div className={`min-w-0 ${r.hidden ? "opacity-50" : ""}`}>
-                  <p className="truncate text-sm">
-                    {i + 1}. {exName(r.exercise_id)}
-                    {r.hidden && (
-                      <span className="ml-2 rounded-full bg-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
-                        Oculto
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-muted">{r.set_type} · {r.set_scheme}</p>
-                </div>
-                <button onClick={() => toggleHidden(r)} role="switch" aria-checked={!r.hidden}
-                  aria-label={`Visible para la clienta: ${exName(r.exercise_id)}`}
-                  title={r.hidden ? "Oculto para la clienta" : "Visible para la clienta"}
-                  className="flex shrink-0 flex-col items-center gap-0.5 text-[10px] text-muted">
-                  <span aria-hidden
-                    className={`relative h-5 w-9 rounded-full transition-colors ${r.hidden ? "bg-line" : "bg-accent"}`}>
-                    <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-ink transition-all ${r.hidden ? "left-0.5" : "left-[1.125rem]"}`} />
-                  </span>
-                  Visible
-                </button>
-                <label className="flex shrink-0 items-center gap-1 text-xs text-muted">
-                  <input key={`${r.id}-${r.rest_seconds}`} type="number" inputMode="numeric" min={0} step={15}
-                    defaultValue={r.rest_seconds ?? ""} placeholder="90"
-                    onBlur={(e) => saveRest(r, e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-                    aria-label={`Descanso en segundos de ${exName(r.exercise_id)}`}
-                    className="figure w-14 rounded-lg border border-line bg-bg px-2 py-1 text-center text-sm text-ink" />
-                  <span>{restSaved === r.id ? <span className="text-ok">s ✓</span> : "s"}</span>
-                </label>
-                <button onClick={() => remove(r.id)} className="shrink-0 rounded-full border border-line px-3 py-1 text-xs text-muted">
-                  Quitar
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="card space-y-3 p-4">
-        <p className="eyebrow">Añadir ejercicio a esta sesión</p>
-        <select value={exId} onChange={(e) => setExId(e.target.value)} aria-label="Ejercicio"
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm">
-          {exercises.length === 0 && <option value="">— biblioteca vacía —</option>}
-          {exercises.map((e) => <option key={e.id} value={e.id}>{e.name} · {e.muscle_group}</option>)}
-        </select>
-        <div className="flex gap-2">
-          <input value={scheme} onChange={(e) => setScheme(e.target.value)}
-            placeholder="Esquema (8/8/6, 3x12, 15 min…)" aria-label="Esquema de series"
-            className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
-          <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Tipo"
-            className="rounded-lg border border-line bg-bg px-3 py-2.5 text-sm">
-            {types.map((t) => <option key={t}>{t}</option>)}
-          </select>
-        </div>
-        <label className="flex items-center gap-2 text-xs text-muted">
-          Descanso (s)
-          <input type="number" inputMode="numeric" min={0} step={15} value={rest}
-            onChange={(e) => setRest(e.target.value)} placeholder="90"
-            className="figure w-20 rounded-lg border border-line bg-bg px-3 py-2 text-center text-sm text-ink" />
-          <span>entre series</span>
-        </label>
-        {msg && <p className="text-xs text-accent">{msg}</p>}
-        <div className="flex flex-wrap gap-2">
-          <button onClick={add} className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink">
-            Añadir a la sesión
-          </button>
-          <button onClick={copyWeekToNext} className="rounded-full border border-line px-5 py-2.5 text-sm text-muted">
-            Copiar semana {week} → {week + 1}
-          </button>
-        </div>
-      </section>
-
-      <p className="text-xs text-muted">
+    <main className="space-y-8">
+      <PageHeader back="/coach/programas" eyebrow="Constructor" title={program.title}>
         La clienta verá este programa en su pestaña Entreno al momento; no hay que “publicar”.
-      </p>
+      </PageHeader>
+
+      <div className="grid gap-8 lg:grid-cols-[3fr_2fr]">
+        {/* ---------- Sesión ---------- */}
+        <div className="min-w-0 space-y-5">
+          <div className="space-y-2">
+            <div className="-mx-5 flex gap-1 overflow-x-auto px-5 lg:mx-0 lg:px-0" role="tablist" aria-label="Semanas">
+              {Array.from({ length: program.weeks }, (_, i) => i + 1).map((w) => (
+                <button key={w} onClick={() => setWeek(w)} role="tab" aria-selected={w === week} className={chip(w === week)}>
+                  Semana {w}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1" role="tablist" aria-label="Días">
+              {Array.from({ length: program.days_per_week }, (_, i) => i + 1).map((d) => (
+                <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day} className={chip(d === day)}>
+                  Día {d}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <section>
+            <p className="eyebrow border-b border-line pb-2">Semana {week} · Día {day} · {dayRows.length} ejercicios</p>
+            {dayRows.length === 0 ? (
+              <EmptyState icon={Dumbbell}>Sesión vacía. Añade el primer ejercicio.</EmptyState>
+            ) : (
+              <ul className="divide-y divide-line">
+                {dayRows.map((r, i) => (
+                  <li key={r.id} className="flex items-center gap-2 py-3">
+                    <span className="figure w-6 shrink-0 text-lg text-muted">{i + 1}</span>
+                    <div className={`min-w-0 flex-1 ${r.hidden ? "opacity-50" : ""}`}>
+                      <p className="flex items-center gap-2 text-sm font-medium">
+                        <span className="truncate">{exName(r.exercise_id)}</span>
+                        {r.hidden && (
+                          <span className="chip min-h-6 shrink-0 bg-surface px-2.5 text-[10px]">Oculto</span>
+                        )}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted">{r.set_type} · {r.set_scheme}</p>
+                    </div>
+                    <label className="flex shrink-0 items-center gap-1 text-xs text-muted">
+                      <input key={`${r.id}-${r.rest_seconds}`} type="number" inputMode="numeric" min={0} step={15}
+                        defaultValue={r.rest_seconds ?? ""} placeholder="90"
+                        onBlur={(e) => saveRest(r, e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                        aria-label={`Descanso en segundos de ${exName(r.exercise_id)}`}
+                        className="field figure w-16 px-2 py-1.5 text-center text-base" />
+                      <span className={restSaved === r.id ? "text-ok" : ""}>s</span>
+                      {restSaved === r.id && <Check size={14} strokeWidth={2.5} aria-label="Guardado" className="text-ok" />}
+                    </label>
+                    <button onClick={() => toggleHidden(r)} aria-pressed={r.hidden}
+                      aria-label={`${r.hidden ? "Mostrar" : "Ocultar"} a la clienta: ${exName(r.exercise_id)}`}
+                      title={r.hidden ? "Oculto para la clienta" : "Visible para la clienta"}
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${r.hidden ? "bg-surface text-muted" : "text-ink"}`}>
+                      {r.hidden ? <EyeOff {...ICON} /> : <Eye {...ICON} />}
+                    </button>
+                    <button onClick={() => remove(r.id)} aria-label={`Quitar ${exName(r.exercise_id)}`} title="Quitar"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:text-danger">
+                      <Trash2 {...ICON} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        {/* ---------- Lateral: añadir y planificar ---------- */}
+        <div className="space-y-5">
+          <section className="card space-y-3">
+            <p className="eyebrow">Añadir a esta sesión</p>
+            <select value={exId} onChange={(e) => setExId(e.target.value)} aria-label="Ejercicio"
+              className="field bg-raised">
+              {exercises.length === 0 && <option value="">Biblioteca vacía</option>}
+              {exercises.map((e) => <option key={e.id} value={e.id}>{e.name} · {e.muscle_group}</option>)}
+            </select>
+            <div className="flex gap-2">
+              <input value={scheme} onChange={(e) => setScheme(e.target.value)}
+                placeholder="Esquema (8/8/6, 3x12, 15 min…)" aria-label="Esquema de series"
+                className="field min-w-0 flex-1 bg-raised" />
+              <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Tipo"
+                className="field w-auto bg-raised">
+                {types.map((t) => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-muted">
+              Descanso
+              <input type="number" inputMode="numeric" min={0} step={15} value={rest}
+                onChange={(e) => setRest(e.target.value)} placeholder="90"
+                className="field figure w-20 bg-raised px-2 py-2 text-center text-base" />
+              <span>s entre series</span>
+            </label>
+            {msg && <p className="text-xs text-accent">{msg}</p>}
+            <button onClick={add} className="btn-primary w-full">
+              <Plus size={18} strokeWidth={2.25} aria-hidden /> Añadir a la sesión
+            </button>
+            {week < program.weeks && (
+              <button onClick={copyWeekToNext} className="chip w-full justify-center gap-1.5 bg-raised text-ink">
+                <Copy size={14} strokeWidth={1.75} aria-hidden /> Copiar semana {week} a la {week + 1}
+              </button>
+            )}
+          </section>
+
+          <section className="card space-y-3">
+            <p className="eyebrow">Planificación en el calendario (opcional)</p>
+            <p className="text-xs text-muted">
+              Con una fecha de inicio y el día de la semana de cada sesión, la clienta ve
+              sus entrenos en su agenda y en Inicio le aparece qué le toca hoy.
+            </p>
+            <label className="flex flex-wrap items-center gap-2 text-xs text-muted">
+              Empieza el
+              <input type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)}
+                className="field w-auto flex-1 bg-raised py-2" />
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {Array.from({ length: program.days_per_week }, (_, i) => i).map((i) => (
+                <label key={i} className="flex items-center gap-2 text-xs text-muted">
+                  <span className="eyebrow w-10 shrink-0">Día {i + 1}</span>
+                  <select value={weekdays[i] ?? 1}
+                    onChange={(e) => setWeekdays((w) => {
+                      const next = [...w];
+                      next[i] = +e.target.value;
+                      return next;
+                    })}
+                    aria-label={`Día de la semana del Día ${i + 1}`}
+                    className="field min-w-0 flex-1 bg-raised px-2 py-2">
+                    {WEEKDAYS.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
+                  </select>
+                </label>
+              ))}
+            </div>
+            <button onClick={savePlan} className="btn-primary w-full">Guardar planificación</button>
+            {planMsg && <p className="text-xs text-accent">{planMsg}</p>}
+          </section>
+        </div>
+      </div>
     </main>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ListVideo, Trash2, Video } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { EmptyState, ICON, PageHeader } from "@/components/ui";
 
 type Exercise = { id: string; name: string; muscle_group: string; video_url: string | null };
 
@@ -53,66 +55,71 @@ export default function Ejercicios() {
   }
 
   return (
-    <main className="space-y-6">
-      <h1 className="text-2xl font-bold">Biblioteca de ejercicios</h1>
+    <main className="space-y-8">
+      <PageHeader eyebrow="Entrenamiento" title="Biblioteca de ejercicios" />
 
-      <section className="card space-y-3 p-4">
+      <div className="grid gap-8 lg:grid-cols-[2fr_3fr]">
+      <section className="card space-y-3 self-start">
         <p className="eyebrow">Añadir ejercicio</p>
         <input
           value={name} onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre (p. ej. Prensa)"
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm"
+          placeholder="Nombre (p. ej. Prensa)" aria-label="Nombre del ejercicio"
+          className="field bg-raised"
         />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <select
             value={muscle} onChange={(e) => setMuscle(e.target.value)}
             aria-label="Grupo muscular"
-            className="rounded-lg border border-line bg-bg px-3 py-2.5 text-sm"
+            className="field w-auto bg-raised"
           >
             {muscles.map((m) => <option key={m}>{m}</option>)}
           </select>
           <input
             value={video} onChange={(e) => setVideo(e.target.value)}
-            placeholder="URL de vídeo (YouTube no listado, opcional)"
-            className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2.5 text-sm"
+            placeholder="URL de vídeo (YouTube no listado, opcional)" aria-label="URL del vídeo"
+            className="field min-w-0 flex-1 basis-48 bg-raised"
           />
         </div>
         {msg && <p className="text-xs text-danger">{msg}</p>}
-        <button onClick={add} className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink">
+        <button onClick={add} className="btn-primary w-full">
           Añadir a la biblioteca
         </button>
       </section>
 
-      <section className="card p-4">
-        <p className="eyebrow">Ejercicios ({list.length})</p>
+      <section>
+        <p className="eyebrow border-b border-line pb-2">Ejercicios ({list.length})</p>
         {loading ? (
-          <p className="mt-3 text-sm text-muted">Cargando…</p>
+          <p className="py-3 text-sm text-muted">Cargando…</p>
         ) : list.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">
-            Aún no hay ejercicios. Añade el primero arriba, o ejecuta la
+          <EmptyState icon={ListVideo}>
+            Aún no hay ejercicios. Añade el primero, o ejecuta la
             migración 0004 para cargar una biblioteca inicial.
-          </p>
+          </EmptyState>
         ) : (
-          <ul className="mt-3 divide-y divide-line">
+          <ul className="divide-y divide-line">
             {list.map((e) => (
               <li key={e.id} className="flex items-center justify-between gap-3 py-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm">{e.name}</p>
-                  <p className="text-xs text-muted">
-                    {e.muscle_group} {e.video_url ? "· 🎬 vídeo" : "· sin vídeo"}
+                  <p className="truncate text-sm font-medium">{e.name}</p>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
+                    {e.muscle_group} ·
+                    {e.video_url
+                      ? <><Video size={14} strokeWidth={1.75} aria-hidden /> vídeo</>
+                      : " sin vídeo"}
                   </p>
                 </div>
                 <button
-                  onClick={() => remove(e.id)}
-                  className="shrink-0 rounded-full border border-line px-3 py-1 text-xs text-muted"
+                  onClick={() => remove(e.id)} aria-label={`Borrar ${e.name}`} title="Borrar"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:text-danger"
                 >
-                  Borrar
+                  <Trash2 {...ICON} />
                 </button>
               </li>
             ))}
           </ul>
         )}
       </section>
+      </div>
     </main>
   );
 }

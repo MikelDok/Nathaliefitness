@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Copy, LayoutTemplate, Trash2, Dumbbell } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { EmptyState, ICON, PageHeader } from "@/components/ui";
 
 type Program = {
   id: string; title: string; weeks: number; days_per_week: number;
@@ -104,8 +106,8 @@ export default function Programas() {
     }
     setBusy(false); setDupOpen(null);
     setMsg(asTemplate
-      ? `“${source.title}” guardado como plantilla ✓`
-      : `“${source.title}” duplicado y activado para ${clientName(target)} ✓`);
+      ? `“${source.title}” guardado como plantilla.`
+      : `“${source.title}” duplicado y activado para ${clientName(target)}.`);
     load();
   }
 
@@ -117,7 +119,7 @@ export default function Programas() {
     const { error } = await sb.rpc("set_active_program", { p_program_id: p.id });
     setBusy(false);
     if (error) { setMsg("No se pudo activar el programa."); return; }
-    setMsg(`“${p.title}” es ahora el programa activo de ${clientName(p.client_id)} ✓`);
+    setMsg(`“${p.title}” es ahora el programa activo de ${clientName(p.client_id)}.`);
     load();
   }
 
@@ -139,49 +141,51 @@ export default function Programas() {
     const open = dupOpen === p.id;
     return (
       <li className="py-3">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-1">
           <Link href={`/coach/programas/${p.id}`} className="min-w-0 flex-1">
             <p className="flex items-center gap-2 text-sm font-medium">
               <span className="truncate">{p.title}</span>
               {p.is_active && (
-                <span className="shrink-0 rounded-full bg-ok/15 px-2 py-0.5 text-[10px] font-semibold text-ok">
-                  Activo
-                </span>
+                <span className="chip min-h-6 shrink-0 bg-ok/15 px-2.5 text-[10px] text-ok">Activo</span>
+              )}
+              {p.is_template && (
+                <span className="chip min-h-6 shrink-0 bg-surface px-2.5 text-[10px]">Plantilla</span>
               )}
             </p>
-            <p className="text-xs text-muted">
-              {p.is_template ? "📋 Plantilla" : clientName(p.client_id)} · {p.weeks} sem · {p.days_per_week} días/sem
+            <p className="mt-0.5 text-xs text-muted">
+              {p.is_template ? "Plantilla" : clientName(p.client_id)} · {p.weeks} sem · {p.days_per_week} días/sem
             </p>
           </Link>
           {!p.is_template && p.client_id && !p.is_active && (
             <button onClick={() => activate(p)} disabled={busy}
               title={`Hacer que ${clientName(p.client_id)} vea este programa`}
-              className="shrink-0 rounded-full border border-ok/50 px-3 py-1.5 text-xs font-medium text-ok disabled:opacity-60">
+              className="chip shrink-0 bg-ok/15 text-ok disabled:opacity-60">
               Activar
             </button>
           )}
           <button
             onClick={() => { setDupOpen(open ? null : p.id); setDupTarget(p.is_template ? (clients[0]?.id || "") : "template"); }}
-            className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs">
-            {p.is_template ? "Usar" : "Duplicar"}
+            aria-expanded={open}
+            className={`chip shrink-0 gap-1.5 ${open ? "chip-active" : "bg-surface text-ink"}`}>
+            <Copy size={14} strokeWidth={1.75} aria-hidden /> {p.is_template ? "Usar" : "Duplicar"}
           </button>
-          <button onClick={() => remove(p)} aria-label={`Borrar ${p.title}`}
-            className="shrink-0 rounded-full border border-line px-2.5 py-1.5 text-xs text-muted">
-            🗑
+          <button onClick={() => remove(p)} aria-label={`Borrar ${p.title}`} title="Borrar"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:text-danger">
+            <Trash2 {...ICON} />
           </button>
         </div>
         {open && (
-          <div className="mt-2 flex items-center gap-2 rounded-xl bg-raised p-2">
+          <div className="card mt-2 flex items-center gap-2 p-2">
             <select value={dupTarget} onChange={(e) => setDupTarget(e.target.value)}
               aria-label="Destino de la copia"
-              className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm">
-              {!p.is_template && <option value="template">📋 Guardar como plantilla</option>}
+              className="field min-w-0 flex-1 bg-raised py-2.5">
+              {!p.is_template && <option value="template">Guardar como plantilla</option>}
               {clients.map((c) => (
-                <option key={c.id} value={c.id}>→ {c.full_name}</option>
+                <option key={c.id} value={c.id}>Para {c.full_name}</option>
               ))}
             </select>
             <button onClick={() => dupTarget && duplicate(p, dupTarget)} disabled={busy || !dupTarget}
-              className="shrink-0 rounded-full bg-accent px-4 py-2 text-xs font-semibold text-accent-ink disabled:opacity-60">
+              className="btn-primary shrink-0">
               {busy ? "Copiando…" : "Copiar"}
             </button>
           </div>
@@ -191,36 +195,37 @@ export default function Programas() {
   }
 
   return (
-    <main className="space-y-6">
-      <h1 className="text-2xl font-bold">Programas</h1>
+    <main className="space-y-8">
+      <PageHeader eyebrow="Entrenamiento" title="Programas" />
 
-      {msg && <p className="rounded-xl border border-accent/40 bg-accent/10 p-3 text-xs">{msg}</p>}
+      {msg && <p role="status" className="rounded-xl bg-accent/15 p-3 text-xs">{msg}</p>}
 
-      <section className="card space-y-3 p-4">
+      <div className="grid gap-8 lg:grid-cols-[2fr_3fr]">
+      <section className="card space-y-3 self-start">
         <p className="eyebrow">Crear programa desde cero</p>
         <input value={title} onChange={(e) => setTitle(e.target.value)}
-          placeholder="Título (p. ej. Hipertrofia · Bloque 1)"
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+          placeholder="Título (p. ej. Hipertrofia · Bloque 1)" aria-label="Título del programa"
+          className="field bg-raised" />
         <div className="flex flex-wrap items-center gap-2">
           <select value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Clienta"
-            className="rounded-lg border border-line bg-bg px-3 py-2.5 text-sm">
-            {clients.length === 0 && <option value="">— sin clientas —</option>}
+            className="field w-auto min-w-0 flex-1 bg-raised">
+            {clients.length === 0 && <option value="">Sin clientas</option>}
             {clients.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}
           </select>
           <label className="flex items-center gap-2 text-xs text-muted">
             Semanas
             <input type="number" min={1} max={12} value={weeks}
               onChange={(e) => setWeeks(+e.target.value || 1)}
-              className="w-16 rounded-lg border border-line bg-bg px-2 py-2 text-center text-sm" />
+              className="field figure w-16 bg-raised px-2 text-center text-base" />
           </label>
           <label className="flex items-center gap-2 text-xs text-muted">
             Días/semana
             <input type="number" min={1} max={7} value={days}
               onChange={(e) => setDays(+e.target.value || 1)}
-              className="w-16 rounded-lg border border-line bg-bg px-2 py-2 text-center text-sm" />
+              className="field figure w-16 bg-raised px-2 text-center text-base" />
           </label>
         </div>
-        <button onClick={create} className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink">
+        <button onClick={create} className="btn-primary w-full">
           Crear y abrir constructor
         </button>
         <p className="text-[11px] text-muted">
@@ -228,27 +233,32 @@ export default function Programas() {
         </p>
       </section>
 
-      <section className="card p-4">
-        <p className="eyebrow">📋 Plantillas ({templates.length})</p>
-        {loading ? <p className="mt-3 text-sm text-muted">Cargando…</p>
+      <div className="space-y-8">
+      <section>
+        <p className="eyebrow flex items-center gap-1.5 border-b border-line pb-2">
+          <LayoutTemplate size={14} strokeWidth={2} aria-hidden /> Plantillas ({templates.length})
+        </p>
+        {loading ? <p className="py-3 text-sm text-muted">Cargando…</p>
         : templates.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">
-            Sin plantillas aún. En cualquier programa, pulsa “Duplicar” → “Guardar como plantilla”.
+          <p className="py-3 text-sm text-muted">
+            Sin plantillas aún. En cualquier programa, pulsa “Duplicar” y elige “Guardar como plantilla”.
           </p>
         ) : (
-          <ul className="mt-1 divide-y divide-line">{templates.map((p) => <Row key={p.id} p={p} />)}</ul>
+          <ul className="divide-y divide-line">{templates.map((p) => <Row key={p.id} p={p} />)}</ul>
         )}
       </section>
 
-      <section className="card p-4">
-        <p className="eyebrow">Programas de clientas ({assigned.length})</p>
-        {loading ? <p className="mt-3 text-sm text-muted">Cargando…</p>
+      <section>
+        <p className="eyebrow border-b border-line pb-2">Programas de clientas ({assigned.length})</p>
+        {loading ? <p className="py-3 text-sm text-muted">Cargando…</p>
         : assigned.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">Todavía no hay programas.</p>
+          <EmptyState icon={Dumbbell}>Todavía no hay programas.</EmptyState>
         ) : (
-          <ul className="mt-1 divide-y divide-line">{assigned.map((p) => <Row key={p.id} p={p} />)}</ul>
+          <ul className="divide-y divide-line">{assigned.map((p) => <Row key={p.id} p={p} />)}</ul>
         )}
       </section>
+      </div>
+      </div>
     </main>
   );
 }

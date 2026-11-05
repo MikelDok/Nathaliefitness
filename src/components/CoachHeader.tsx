@@ -3,17 +3,21 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  Dumbbell, HelpCircle, LayoutDashboard, Lightbulb, ListVideo, LogOut, Salad, type LucideIcon,
+} from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import { Avatar, ICON } from "@/components/ui";
 
-const nav = [
-  { href: "/coach", label: "Resumen" },
-  { href: "/coach/programas", label: "Programas" },
-  { href: "/coach/nutricion", label: "Nutrición" },
-  { href: "/coach/ejercicios", label: "Ejercicios" },
-  { href: "/coach/sugerencias", label: "Sugerencias" },
-  { href: "/coach/faqs", label: "FAQs" },
+const nav: { href: string; label: string; Icon: LucideIcon }[] = [
+  { href: "/coach", label: "Resumen", Icon: LayoutDashboard },
+  { href: "/coach/programas", label: "Programas", Icon: Dumbbell },
+  { href: "/coach/nutricion", label: "Nutrición", Icon: Salad },
+  { href: "/coach/ejercicios", label: "Ejercicios", Icon: ListVideo },
+  { href: "/coach/sugerencias", label: "Sugerencias", Icon: Lightbulb },
+  { href: "/coach/faqs", label: "FAQs", Icon: HelpCircle },
 ];
 
 export default function CoachHeader() {
@@ -42,33 +46,33 @@ export default function CoachHeader() {
 
   return (
     <header className="border-b border-line print:hidden">
-      <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-        <div>
-          <p className="eyebrow">Panel · NEA FITNESS</p>
-          <p className="text-sm font-semibold">{name || "\u00A0"}</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-4">
+        <Link href="/coach" className="min-w-0">
+          <span className="block font-display text-2xl font-bold uppercase leading-none tracking-[0.04em]">
+            NEA <span className="text-accent">Fitness</span>
+          </span>
+          <span className="eyebrow mt-1 block text-[10px]">Panel de la entrenadora</span>
+        </Link>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {name && (
+            <span className="hidden max-w-40 truncate text-sm font-medium sm:block">{name}</span>
+          )}
+          {name && <Avatar name={name} size={36} />}
           <ThemeSwitcher compact />
-          <button
-            onClick={signOut}
-            className="rounded-full border border-line px-3 py-1.5 text-xs text-muted"
-          >
-            Cerrar sesión
+          <button onClick={signOut} aria-label="Cerrar sesión" title="Cerrar sesión"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-surface text-muted">
+            <LogOut {...ICON} />
           </button>
         </div>
       </div>
-      <nav className="mx-auto flex max-w-4xl gap-1 overflow-x-auto px-4 pb-2" aria-label="Secciones del panel">
-        {nav.map((n) => {
-          const active = n.href === "/coach" ? path === "/coach" : path.startsWith(n.href);
+      <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-5 pb-3 [scrollbar-width:none]" aria-label="Secciones del panel">
+        {nav.map(({ href, label, Icon }) => {
+          const active = href === "/coach" ? path === "/coach" : path.startsWith(href);
           return (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
-                active ? "bg-accent text-accent-ink" : "text-muted"
-              }`}
-            >
-              {n.label}
+            <Link key={href} href={href} aria-current={active ? "page" : undefined}
+              className={`chip shrink-0 gap-1.5 ${active ? "chip-active" : ""}`}>
+              <Icon size={16} strokeWidth={1.75} aria-hidden />
+              {label}
             </Link>
           );
         })}

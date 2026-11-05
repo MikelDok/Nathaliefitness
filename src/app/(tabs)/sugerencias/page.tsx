@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bug, Inbox, Lightbulb, MessageSquare } from "lucide-react";
+import { Inbox, MessageSquare } from "lucide-react";
+import { SUGGESTION_ICON as KIND_ICON } from "@/components/icons";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
@@ -11,8 +12,6 @@ import {
   kindLabel, statusLabel, statusTone,
   type Suggestion, type SuggestionKind,
 } from "@/lib/suggestions";
-
-const KIND_ICON = { fallo: Bug, idea: Lightbulb, otro: MessageSquare } as const;
 
 export default function Sugerencias() {
   const [kind, setKind] = useState<SuggestionKind>("idea");

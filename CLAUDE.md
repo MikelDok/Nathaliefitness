@@ -50,12 +50,23 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
     la coach. Pantallas migradas: todas las de la clienta (Inicio, Entreno,
     detalle de ejercicio + `RestTimer`, Progreso, Nutrición, Compra, Hábitos,
     Check-in, Agenda, Mensajes, Sugerencias, FAQs, Perfil), BottomNav, login,
-    `/recuperar`, `/nueva-contrasena`, `/privacidad`. Falta el panel de la
-    coach (encargo 3) y `diario/` (oculto, sin migrar).
+    `/recuperar`, `/nueva-contrasena`, `/privacidad`, y todo el panel de la
+    coach (`CoachHeader`, Resumen, ficha, chat/agenda de la ficha, programas y
+    constructor, nutrición, editor y lista de la compra, ejercicios,
+    sugerencias, FAQs). Sin migrar: `diario/` (oculto). El informe y la hoja
+    impresa de la compra siguen en papel blanco con hex (solo heredan la
+    fuente de los h1).
+  - Panel: contenedor `max-w-5xl`; en escritorio, rejillas de 2 columnas
+    (formulario en `.card` a un lado, lista plana al otro). Acciones de fila
+    como iconos con `aria-label` (Pencil, Trash2, ArrowUp/ArrowDown,
+    Eye/EyeOff, Copy). Badges ("Activo", "Plantilla", "Oculto", estados) como
+    `chip` pequeño (`min-h-6 px-2.5 text-[10px]`).
   - Piezas comunes en `src/components/ui.tsx`: `PageHeader` (eyebrow + h1 de
     32 px, flecha de volver y acción opcionales), `EmptyState` (icono lucide de
     32 px en muted + una línea, sin caja), `CheckDot` (check redondo relleno en
-    accent), `ICON` (props de lucide: 20 px, trazo 1.75) y `chip(activo)`.
+    accent), `Avatar` (inicial en círculo), `ICON` (props de lucide: 20 px,
+    trazo 1.75) y `chip(activo)`. Iconos por tipo de cita y de sugerencia en
+    `src/components/icons.ts` (los `KINDS` de `lib/` ya no llevan emoji).
   - Dentro de una `.card` (surface), los campos y botones secundarios van en
     `bg-raised` para que se distingan. `.range` da estilo a los deslizadores
     (check-in). Componentes compartidos con el panel (`Chat`, `Appointments`,
@@ -236,9 +247,8 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
 - Tema claro/oscuro/sistema (clienta y panel) y decimales con coma.
 - Planes de comida de varias semanas (pestañas en el editor y en Nutrición,
   fecha de inicio) y lista de la compra en el panel (copiar e imprimir).
-- Rediseño visual 1/3 (fuentes, tokens, componentes base, Inicio, barra
-  inferior y acceso) y 2/3 (resto de pantallas de la clienta). Pendiente el
-  3/3: panel de la coach.
+- Rediseño visual completo (3 encargos): sistema base, pantallas de la
+  clienta y panel de la coach.
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los

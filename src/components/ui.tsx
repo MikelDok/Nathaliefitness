@@ -54,3 +54,13 @@ export function CheckDot({ on, size = 22 }: { on: boolean; size?: number }) {
     </span>
   );
 }
+
+/** Avatar redondo con la inicial del nombre. */
+export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+  return (
+    <span aria-hidden style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }}
+      className="flex shrink-0 items-center justify-center rounded-full bg-raised font-display font-bold uppercase">
+      {name.trim().charAt(0) || "·"}
+    </span>
+  );
+}

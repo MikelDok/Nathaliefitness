@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ChevronRight, Salad } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { EmptyState, ICON, PageHeader } from "@/components/ui";
 
 type Plan = { id: string; title: string; client_id: string | null; kcal_target: number | null; created_at: string };
 type Client = { id: string; full_name: string };
@@ -50,17 +52,18 @@ export default function NutricionCoach() {
   }
 
   return (
-    <main className="space-y-6">
-      <h1 className="text-2xl font-bold">Planes de comida</h1>
+    <main className="space-y-8">
+      <PageHeader eyebrow="Nutrición" title="Planes de comida" />
 
-      <section className="card space-y-3 p-4">
+      <div className="grid gap-8 lg:grid-cols-[2fr_3fr]">
+      <section className="card space-y-3 self-start">
         <p className="eyebrow">Crear plan</p>
         <input value={title} onChange={(e) => setTitle(e.target.value)}
-          placeholder="Título (p. ej. Definición · 1.900 kcal)"
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+          placeholder="Título (p. ej. Definición · 1.900 kcal)" aria-label="Título del plan"
+          className="field bg-raised" />
         <select value={clientId} onChange={(e) => setClientId(e.target.value)} aria-label="Clienta"
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm">
-          {clients.length === 0 && <option value="">— sin clientas —</option>}
+          className="field bg-raised">
+          {clients.length === 0 && <option value="">Sin clientas</option>}
           {clients.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}
         </select>
         <div className="grid grid-cols-4 gap-2">
@@ -68,11 +71,11 @@ export default function NutricionCoach() {
             <input key={ph as string} value={v as string}
               onChange={(e) => (set as (s: string) => void)(e.target.value)}
               type="number" inputMode="numeric" placeholder={ph as string} aria-label={ph as string}
-              className="figure rounded-lg border border-line bg-bg px-2 py-2.5 text-center text-sm" />
+              className="field figure min-w-0 bg-raised px-2 text-center text-base placeholder:font-sans placeholder:text-xs placeholder:font-normal" />
           ))}
         </div>
         {msg && <p className="text-xs text-danger">{msg}</p>}
-        <button onClick={create} className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink">
+        <button onClick={create} className="btn-primary w-full">
           Crear y abrir editor
         </button>
         <p className="text-[11px] text-muted">
@@ -80,29 +83,30 @@ export default function NutricionCoach() {
         </p>
       </section>
 
-      <section className="card p-4">
-        <p className="eyebrow">Planes existentes</p>
-        {loading ? <p className="mt-3 text-sm text-muted">Cargando…</p>
+      <section>
+        <p className="eyebrow border-b border-line pb-2">Planes existentes ({plans.length})</p>
+        {loading ? <p className="py-3 text-sm text-muted">Cargando…</p>
         : plans.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">Todavía no hay planes.</p>
+          <EmptyState icon={Salad}>Todavía no hay planes.</EmptyState>
         ) : (
-          <ul className="mt-3 divide-y divide-line">
+          <ul className="divide-y divide-line">
             {plans.map((p) => (
               <li key={p.id}>
-                <Link href={`/coach/nutricion/${p.id}`} className="flex items-center justify-between py-3">
+                <Link href={`/coach/nutricion/${p.id}`} className="flex items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{p.title}</p>
-                    <p className="text-xs text-muted">
+                    <p className="mt-0.5 text-xs text-muted">
                       {clientName(p.client_id)}{p.kcal_target ? ` · ${p.kcal_target} kcal` : ""}
                     </p>
                   </div>
-                  <span aria-hidden className="text-muted">›</span>
+                  <ChevronRight {...ICON} className="shrink-0 text-muted" />
                 </Link>
               </li>
             ))}
           </ul>
         )}
       </section>
+      </div>
     </main>
   );
 }

@@ -26,10 +26,11 @@ export const APPOINTMENT_SELECT =
   "id,client_id,created_by,title,kind,starts_at,duration_min,location,note,status," +
   "created_at,updated_at,seen_by_client_at,seen_by_coach_at";
 
-export const KINDS: { value: AppointmentKind; label: string; icon: string }[] = [
-  { value: "presencial", label: "Presencial", icon: "📍" },
-  { value: "videollamada", label: "Videollamada", icon: "🎥" },
-  { value: "otro", label: "Otro", icon: "🗓" },
+// Los iconos de cada tipo están en src/components/icons.ts (lucide).
+export const KINDS: { value: AppointmentKind; label: string }[] = [
+  { value: "presencial", label: "Presencial" },
+  { value: "videollamada", label: "Videollamada" },
+  { value: "otro", label: "Otro" },
 ];
 
 export const WEEKDAYS = [

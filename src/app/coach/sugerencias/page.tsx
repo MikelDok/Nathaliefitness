@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Check, Inbox } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { EmptyState, PageHeader, chip } from "@/components/ui";
+import { SUGGESTION_ICON } from "@/components/icons";
 import {
   STATUSES, SUGGESTION_SELECT, REPLY_MAX,
   kindLabel, statusTone,
@@ -76,50 +79,53 @@ export default function SugerenciasCoach() {
   ];
 
   return (
-    <main className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold">Sugerencias</h1>
-        <p className="mt-1 text-sm text-muted">Fallos, ideas y comentarios que te envían tus clientas desde Perfil.</p>
-      </header>
+    <main className="mx-auto max-w-3xl space-y-8">
+      <PageHeader eyebrow="Piloto" title="Sugerencias">
+        Fallos, ideas y comentarios que te envían tus clientas desde Perfil.
+      </PageHeader>
 
-      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Filtrar por estado">
+      <div className="-mx-5 flex gap-1 overflow-x-auto px-5" role="tablist" aria-label="Filtrar por estado">
         {filters.map((f) => (
           <button key={f.value} onClick={() => setFilter(f.value)} role="tab" aria-selected={filter === f.value}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${filter === f.value ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
+            className={chip(filter === f.value)}>
             {f.label}
           </button>
         ))}
       </div>
 
-      {err && <p className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs text-danger">{err}</p>}
+      {err && <p className="rounded-xl bg-danger/15 p-3 text-xs text-danger">{err}</p>}
 
       {loading ? (
         <p className="text-sm text-muted">Cargando…</p>
       ) : shown.length === 0 ? (
-        <p className="card p-6 text-center text-sm text-muted">
+        <EmptyState icon={Inbox}>
           {rows.length === 0 ? "Todavía no has recibido ninguna sugerencia." : "No hay sugerencias con este estado."}
-        </p>
+        </EmptyState>
       ) : (
-        <ul className="space-y-3">
+        <ul className="divide-y divide-line border-t border-line">
           {shown.map((r) => {
             const k = kindLabel(r.kind);
+            const KindIcon = SUGGESTION_ICON[r.kind];
             const draft = drafts[r.id] ?? "";
             return (
-              <li key={r.id} className={`card p-4 ${r.status === "recibida" ? "border-accent/40" : ""}`}>
+              <li key={r.id} className="py-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm">
-                    <Link href={`/coach/clientes/${r.client_id}`} className="font-semibold underline-offset-2 hover:underline">
+                  <p className="flex flex-wrap items-center gap-x-1.5 text-sm">
+                    {r.status === "recibida" && <span aria-label="Nueva" className="h-2 w-2 rounded-full bg-accent" />}
+                    <Link href={`/coach/clientes/${r.client_id}`} className="font-medium underline-offset-2 hover:underline">
                       {r.profiles?.full_name || "Clienta"}
                     </Link>
-                    <span className="text-muted"> · <span aria-hidden>{k.icon} </span>{k.label} · {new Date(r.created_at).toLocaleDateString("es-ES")}</span>
+                    <span className="flex items-center gap-1.5 text-muted">
+                      · <KindIcon size={14} strokeWidth={1.75} aria-hidden /> {k.label} · {new Date(r.created_at).toLocaleDateString("es-ES")}
+                    </span>
                   </p>
-                  <label className="flex items-center gap-2 text-xs text-muted">
-                    Estado
+                  <label className="flex items-center gap-2">
+                    <span className="sr-only">Estado</span>
                     <select value={r.status} onChange={(e) => setStatus(r, e.target.value as SuggestionStatus)}
-                      className={`rounded-full border border-line px-2 py-1 text-xs font-semibold ${statusTone(r.status)}`}>
+                      className={`chip min-h-7 cursor-pointer border-0 px-3 text-[11px] ${statusTone(r.status)}`}>
                       {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                     </select>
-                    {savedId === r.id && <span className="text-ok">✓</span>}
+                    {savedId === r.id && <Check size={14} strokeWidth={2.5} aria-label="Guardado" className="text-ok" />}
                   </label>
                 </div>
                 {r.screen && <p className="mt-1 text-xs text-muted">Pantalla: {r.screen}</p>}
@@ -131,9 +137,9 @@ export default function SugerenciasCoach() {
                     onKeyDown={(e) => { if (e.key === "Enter") reply(r); }}
                     placeholder="Respuesta corta para la clienta (opcional)"
                     aria-label={`Respuesta a ${r.profiles?.full_name || "la clienta"}`}
-                    className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm" />
+                    className="field min-w-0 flex-1" />
                   <button onClick={() => reply(r)} disabled={draft.trim() === (r.coach_reply || "")}
-                    className="shrink-0 rounded-full bg-accent px-4 py-2 text-xs font-semibold text-accent-ink disabled:opacity-50">
+                    className="btn-primary shrink-0">
                     {r.coach_reply ? "Actualizar" : "Responder"}
                   </button>
                 </div>

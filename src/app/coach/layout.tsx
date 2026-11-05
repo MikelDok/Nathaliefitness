@@ -6,7 +6,7 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
     <CoachGate>
       <div className="min-h-dvh">
         <CoachHeader />
-        <div className="mx-auto max-w-4xl px-4 py-6">{children}</div>
+        <div className="mx-auto max-w-5xl px-5 py-8">{children}</div>
       </div>
     </CoachGate>
   );

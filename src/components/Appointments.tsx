@@ -4,11 +4,10 @@
 // la entrenadora; asCoach solo decide qué columna de "visto" toca marcar.
 
 import { useCallback, useEffect, useState } from "react";
-import { CalendarPlus, MapPin, NotebookPen, Plus, Video, CalendarDays, CalendarX2 } from "lucide-react";
+import { CalendarPlus, NotebookPen, Plus, CalendarDays, CalendarX2 } from "lucide-react";
+import { APPOINTMENT_ICON } from "@/components/icons";
 import { getSupabase } from "@/lib/supabase";
 import { EmptyState } from "@/components/ui";
-
-const KIND_ICON = { presencial: MapPin, videollamada: Video, otro: CalendarDays } as const;
 import {
   APPOINTMENT_SELECT, KINDS, formatWhen, dateKey,
   type Appointment, type AppointmentKind,
@@ -126,7 +125,7 @@ export default function Appointments({ clientId, asCoach }: { clientId: string; 
   function Row({ a }: { a: Appointment }) {
     const cancelled = a.status === "cancelada";
     const k = KINDS.find((x) => x.value === a.kind);
-    const KindIcon = KIND_ICON[a.kind as keyof typeof KIND_ICON] ?? CalendarDays;
+    const KindIcon = APPOINTMENT_ICON[a.kind] ?? CalendarDays;
     const isLink = !!a.location && /^https?:\/\//.test(a.location);
     return (
       <li className="py-3.5">

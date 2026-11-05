@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, HelpCircle, Pencil, Trash2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { EmptyState, ICON, PageHeader } from "@/components/ui";
+
+const iconBtn = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted disabled:opacity-30";
 
 type Faq = { id: string; question: string; answer: string; position: number; published: boolean };
 
@@ -43,7 +47,7 @@ export default function FaqsCoach() {
     setBusy(false);
     if (error) { setMsg("No se pudo crear la pregunta."); return; }
     setQuestion(""); setAnswer("");
-    setMsg("Pregunta añadida ✓");
+    setMsg("Pregunta añadida.");
     load();
   }
 
@@ -106,78 +110,76 @@ export default function FaqsCoach() {
   }
 
   return (
-    <main className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold">Preguntas frecuentes</h1>
-        <p className="mt-1 text-sm text-muted">
-          Tus clientas ven las publicadas en Perfil → Preguntas frecuentes, en este orden.
-        </p>
-      </header>
+    <main className="space-y-8">
+      <PageHeader eyebrow="Clientas" title="Preguntas frecuentes">
+        Tus clientas ven las publicadas en Perfil, en Preguntas frecuentes, en este orden.
+      </PageHeader>
 
-      {msg && <p className="text-xs text-accent">{msg}</p>}
+      {msg && <p role="status" className="text-xs text-accent">{msg}</p>}
 
-      <section className="card p-4">
-        <p className="eyebrow">Tus preguntas ({faqs.length})</p>
+      <div className="grid gap-8 lg:grid-cols-[3fr_2fr]">
+      <section className="min-w-0">
+        <p className="eyebrow border-b border-line pb-2">Tus preguntas ({faqs.length})</p>
         {loading ? (
-          <p className="mt-3 text-sm text-muted">Cargando…</p>
+          <p className="py-3 text-sm text-muted">Cargando…</p>
         ) : faqs.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">Aún no hay preguntas. Crea la primera abajo.</p>
+          <EmptyState icon={HelpCircle}>Aún no hay preguntas. Crea la primera.</EmptyState>
         ) : (
-          <ul className="mt-3 divide-y divide-line">
+          <ul className="divide-y divide-line">
             {faqs.map((f, i) => (
               <li key={f.id} className="py-3">
                 {editId === f.id ? (
                   <div className="space-y-2">
                     <input value={editQ} maxLength={Q_MAX} onChange={(e) => setEditQ(e.target.value)}
-                      aria-label="Pregunta"
-                      className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm" />
+                      aria-label="Pregunta" className="field" />
                     <textarea value={editA} maxLength={A_MAX} rows={4} onChange={(e) => setEditA(e.target.value)}
-                      aria-label="Respuesta"
-                      className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm" />
+                      aria-label="Respuesta" className="field" />
                     <div className="flex gap-2">
-                      <button onClick={saveEdit}
-                        className="rounded-full bg-accent px-4 py-2 text-xs font-semibold text-accent-ink">Guardar</button>
-                      <button onClick={() => setEditId(null)}
-                        className="rounded-full border border-line px-4 py-2 text-xs text-muted">Cancelar</button>
+                      <button onClick={saveEdit} className="btn-primary">Guardar</button>
+                      <button onClick={() => setEditId(null)} className="chip min-h-11 bg-surface">Cancelar</button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-start gap-3">
-                    <div className="flex shrink-0 flex-col gap-1">
+                  <div className="flex items-start gap-2">
+                    <div className="flex shrink-0 flex-col">
                       <button onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Subir: ${f.question}`}
-                        className="h-7 w-7 rounded-full border border-line text-xs text-muted disabled:opacity-30">↑</button>
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-muted disabled:opacity-30">
+                        <ArrowUp size={16} strokeWidth={1.75} aria-hidden />
+                      </button>
                       <button onClick={() => move(i, 1)} disabled={i === faqs.length - 1} aria-label={`Bajar: ${f.question}`}
-                        className="h-7 w-7 rounded-full border border-line text-xs text-muted disabled:opacity-30">↓</button>
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-muted disabled:opacity-30">
+                        <ArrowDown size={16} strokeWidth={1.75} aria-hidden />
+                      </button>
                     </div>
                     <div className={`min-w-0 flex-1 ${f.published ? "" : "opacity-50"}`}>
                       <p className="text-sm font-medium">
                         {f.question}
                         {!f.published && (
-                          <span className="ml-2 rounded-full bg-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted">
-                            Oculta
-                          </span>
+                          <span className="chip ml-2 min-h-6 bg-surface px-2.5 text-[10px]">Oculta</span>
                         )}
                       </p>
                       <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-muted">{f.answer}</p>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      <button onClick={() => togglePublished(f)} role="switch" aria-checked={f.published}
-                        aria-label={`Publicada: ${f.question}`}
-                        className="flex items-center gap-1.5 text-[10px] text-muted">
-                        Publicada
-                        <span aria-hidden
-                          className={`relative h-5 w-9 rounded-full transition-colors ${f.published ? "bg-accent" : "bg-line"}`}>
-                          <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-ink transition-all ${f.published ? "left-[1.125rem]" : "left-0.5"}`} />
-                        </span>
+                    <div className="flex shrink-0 items-center">
+                      <button onClick={() => togglePublished(f)} aria-pressed={f.published}
+                        aria-label={`${f.published ? "Ocultar" : "Publicar"}: ${f.question}`}
+                        title={f.published ? "Publicada" : "Oculta"}
+                        className={`${iconBtn} ${f.published ? "text-ink" : "bg-surface"}`}>
+                        {f.published ? <Eye {...ICON} /> : <EyeOff {...ICON} />}
                       </button>
-                      <div className="flex gap-1">
-                        <button onClick={() => startEdit(f)}
-                          className="rounded-full border border-line px-3 py-1 text-xs text-muted">Editar</button>
-                        <button onClick={() => remove(f)}
-                          className={`rounded-full border px-3 py-1 text-xs ${confirmDel === f.id ? "border-danger text-danger" : "border-line text-muted"}`}>
-                          {confirmDel === f.id ? "¿Borrar? Toca otra vez" : "Borrar"}
+                      <button onClick={() => startEdit(f)} aria-label={`Editar: ${f.question}`} title="Editar" className={iconBtn}>
+                        <Pencil {...ICON} />
+                      </button>
+                      {confirmDel === f.id ? (
+                        <button onClick={() => remove(f)} className="chip min-h-9 bg-danger/15 px-3 text-danger">
+                          ¿Borrar? Toca otra vez
                         </button>
-                      </div>
+                      ) : (
+                        <button onClick={() => remove(f)} aria-label={`Borrar: ${f.question}`} title="Borrar"
+                          className={`${iconBtn} hover:text-danger`}>
+                          <Trash2 {...ICON} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -187,20 +189,20 @@ export default function FaqsCoach() {
         )}
       </section>
 
-      <section className="card space-y-3 p-4">
+      <section className="card space-y-3 self-start">
         <p className="eyebrow">Nueva pregunta</p>
         <input value={question} maxLength={Q_MAX} onChange={(e) => setQuestion(e.target.value)}
           placeholder="Pregunta (p. ej. ¿Qué hago si me pierdo un entreno?)" aria-label="Pregunta"
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+          className="field bg-raised" />
         <textarea value={answer} maxLength={A_MAX} rows={4} onChange={(e) => setAnswer(e.target.value)}
           placeholder="Respuesta" aria-label="Respuesta"
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
-        <button onClick={create} disabled={busy}
-          className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink disabled:opacity-60">
+          className="field bg-raised" />
+        <button onClick={create} disabled={busy} className="btn-primary w-full">
           {busy ? "Guardando…" : "Añadir pregunta"}
         </button>
         <p className="text-[11px] text-muted">Las nuevas se publican al momento y van al final de la lista.</p>
       </section>
+      </div>
     </main>
   );
 }

@@ -11,10 +11,10 @@ const EVENT = "nea:theme";
 /** Color de la barra del navegador (igual que --color-bg de cada tema). */
 export const THEME_COLOR: Record<Theme, string> = { dark: "#0b0b0c", light: "#f7f7f6" };
 
-export const THEME_OPTIONS: { value: ThemePref; label: string; short: string }[] = [
-  { value: "dark", label: "Oscuro", short: "☾" },
-  { value: "light", label: "Claro", short: "☀" },
-  { value: "system", label: "Sistema", short: "Auto" },
+export const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
+  { value: "dark", label: "Oscuro" },
+  { value: "light", label: "Claro" },
+  { value: "system", label: "Sistema" },
 ];
 
 const isPref = (v: unknown): v is ThemePref => v === "dark" || v === "light" || v === "system";
