@@ -61,6 +61,10 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
     como iconos con `aria-label` (Pencil, Trash2, ArrowUp/ArrowDown,
     Eye/EyeOff, Copy). Badges ("Activo", "Plantilla", "Oculto", estados) como
     `chip` pequeño (`min-h-6 px-2.5 text-[10px]`).
+  - **Borrados con doble toque**: `useConfirm` (`src/lib/useConfirm.ts`) +
+    `DeleteButton`. El primer toque muestra "¿Borrar? Toca otra vez" y se
+    desarma solo a los 3 s. Cualquier borrado nuevo debe usarlo (sin
+    `confirm()` del navegador).
   - Piezas comunes en `src/components/ui.tsx`: `PageHeader` (eyebrow + h1 de
     32 px, flecha de volver y acción opcionales), `EmptyState` (icono lucide de
     32 px en muted + una línea, sin caja), `CheckDot` (check redondo relleno en

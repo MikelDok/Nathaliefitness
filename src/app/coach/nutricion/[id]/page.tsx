@@ -3,8 +3,10 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabase } from "@/lib/supabase";
-import { Copy, Plus, ShoppingCart, Trash2, UtensilsCrossed } from "lucide-react";
-import { EmptyState, ICON, PageHeader, chip } from "@/components/ui";
+import { useConfirm } from "@/lib/useConfirm";
+import DeleteButton from "@/components/DeleteButton";
+import { Copy, Plus, ShoppingCart, UtensilsCrossed } from "lucide-react";
+import { EmptyState, PageHeader, chip } from "@/components/ui";
 import { MEAL_SLOTS as slots, MAX_MEAL_WEEKS, sortBySlot, currentWeek } from "@/lib/meals";
 
 type Plan = {
@@ -34,6 +36,7 @@ export default function EditorPlan({ params }: { params: Promise<{ id: string }>
   const [ingredients, setIngredients] = useState("");
   const [instructions, setInstructions] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
+  const del = useConfirm(); // borrado con doble toque
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -75,6 +78,7 @@ export default function EditorPlan({ params }: { params: Promise<{ id: string }>
   }
 
   async function remove(mealId: string) {
+    if (!del.confirm(mealId)) return;
     const sb = getSupabase();
     if (!sb) return;
     await sb.from("meals").delete().eq("id", mealId);
@@ -188,10 +192,7 @@ export default function EditorPlan({ params }: { params: Promise<{ id: string }>
                       <p className="mt-1 truncate text-sm font-medium">{m.name}</p>
                       <p className="mt-0.5 text-xs text-muted">{m.kcal} kcal · P {m.protein_g} · G {m.fat_g} · C {m.carbs_g}</p>
                     </div>
-                    <button onClick={() => remove(m.id)} aria-label={`Quitar ${m.name}`} title="Quitar"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:text-danger">
-                      <Trash2 {...ICON} />
-                    </button>
+                    <DeleteButton armed={del.pending === m.id} onClick={() => remove(m.id)} label={`Quitar ${m.name}`} />
                   </li>
                 ))}
               </ul>

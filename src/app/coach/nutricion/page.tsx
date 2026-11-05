@@ -23,6 +23,8 @@ export default function NutricionCoach() {
     const sb = getSupabase();
     if (!sb) { setLoading(false); return; }
     const { data: u } = await sb.auth.getUser();
+    // sin sesión (modo demo) no hay coach: estado vacío en vez de fallar
+    if (!u.user) { setLoading(false); return; }
     const [{ data: pl }, { data: cl }] = await Promise.all([
       sb.from("meal_plans").select("id,title,client_id,kcal_target,created_at").order("created_at", { ascending: false }),
       sb.from("profiles").select("id,full_name").eq("coach_id", u.user!.id).eq("role", "client").order("full_name"),
@@ -42,6 +44,7 @@ export default function NutricionCoach() {
     const sb = getSupabase();
     if (!sb) return;
     const { data: u } = await sb.auth.getUser();
+    if (!u.user) { setMsg("Inicia sesión como entrenadora para crear."); return; }
     const { data, error } = await sb.from("meal_plans").insert({
       coach_id: u.user!.id, client_id: clientId, title: title.trim(),
       kcal_target: +kcal || null, protein_g: +prot || null,

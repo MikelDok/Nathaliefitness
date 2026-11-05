@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ListVideo, Trash2, Video } from "lucide-react";
+import { ListVideo, Video } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
-import { EmptyState, ICON, PageHeader } from "@/components/ui";
+import { useConfirm } from "@/lib/useConfirm";
+import DeleteButton from "@/components/DeleteButton";
+import { EmptyState, PageHeader } from "@/components/ui";
 
 type Exercise = { id: string; name: string; muscle_group: string; video_url: string | null };
 
@@ -16,6 +18,7 @@ export default function Ejercicios() {
   const [muscle, setMuscle] = useState(muscles[0]);
   const [video, setVideo] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
+  const del = useConfirm(); // borrado con doble toque
 
   async function load() {
     const sb = getSupabase();
@@ -47,6 +50,8 @@ export default function Ejercicios() {
   }
 
   async function remove(id: string) {
+    setMsg(null);
+    if (!del.confirm(id)) return;
     const sb = getSupabase();
     if (!sb) return;
     const { error } = await sb.from("exercises").delete().eq("id", id);
@@ -108,12 +113,7 @@ export default function Ejercicios() {
                       : " sin vídeo"}
                   </p>
                 </div>
-                <button
-                  onClick={() => remove(e.id)} aria-label={`Borrar ${e.name}`} title="Borrar"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:text-danger"
-                >
-                  <Trash2 {...ICON} />
-                </button>
+                <DeleteButton armed={del.pending === e.id} onClick={() => remove(e.id)} label={`Borrar ${e.name}`} />
               </li>
             ))}
           </ul>

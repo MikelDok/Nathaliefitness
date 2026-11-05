@@ -2,7 +2,9 @@
 
 import { use, useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
-import { Check, Copy, Dumbbell, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
+import { useConfirm } from "@/lib/useConfirm";
+import DeleteButton from "@/components/DeleteButton";
+import { Check, Copy, Dumbbell, Eye, EyeOff, Plus } from "lucide-react";
 import { EmptyState, ICON, PageHeader, chip } from "@/components/ui";
 import { PLAN_SELECT, WEEKDAYS } from "@/lib/agenda";
 
@@ -35,6 +37,7 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
   const [rest, setRest] = useState("90");
   const [restSaved, setRestSaved] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const del = useConfirm(); // borrado con doble toque
   const [loading, setLoading] = useState(true);
   // planificación: fecha de inicio y qué día de la semana es cada Día N
   const [startsOn, setStartsOn] = useState("");
@@ -89,6 +92,7 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
   }
 
   async function remove(rowId: string) {
+    if (!del.confirm(rowId)) return;
     const sb = getSupabase();
     if (!sb) return;
     await sb.from("program_exercises").delete().eq("id", rowId);
@@ -220,10 +224,8 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
                       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${r.hidden ? "bg-surface text-muted" : "text-ink"}`}>
                       {r.hidden ? <EyeOff {...ICON} /> : <Eye {...ICON} />}
                     </button>
-                    <button onClick={() => remove(r.id)} aria-label={`Quitar ${exName(r.exercise_id)}`} title="Quitar"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:text-danger">
-                      <Trash2 {...ICON} />
-                    </button>
+                    <DeleteButton armed={del.pending === r.id} onClick={() => remove(r.id)}
+                      label={`Quitar ${exName(r.exercise_id)} de la sesión`} />
                   </li>
                 ))}
               </ul>

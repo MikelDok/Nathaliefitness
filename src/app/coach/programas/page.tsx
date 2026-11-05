@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Copy, LayoutTemplate, Trash2, Dumbbell } from "lucide-react";
+import { Copy, LayoutTemplate, Dumbbell } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
-import { EmptyState, ICON, PageHeader } from "@/components/ui";
+import { useConfirm } from "@/lib/useConfirm";
+import DeleteButton from "@/components/DeleteButton";
+import { EmptyState, PageHeader } from "@/components/ui";
 
 type Program = {
   id: string; title: string; weeks: number; days_per_week: number;
@@ -21,6 +23,7 @@ export default function Programas() {
   const [weeks, setWeeks] = useState(4);
   const [days, setDays] = useState(3);
   const [msg, setMsg] = useState<string | null>(null);
+  const del = useConfirm(); // borrado con doble toque
   // panel de duplicado: id del programa abierto + destino elegido
   const [dupOpen, setDupOpen] = useState<string | null>(null);
   const [dupTarget, setDupTarget] = useState<string>("template");
@@ -30,6 +33,8 @@ export default function Programas() {
     const sb = getSupabase();
     if (!sb) { setLoading(false); return; }
     const { data: u } = await sb.auth.getUser();
+    // sin sesión (modo demo) no hay coach: estado vacío en vez de fallar
+    if (!u.user) { setLoading(false); return; }
     const [{ data: pr }, { data: cl }] = await Promise.all([
       sb.from("programs")
         .select("id,title,weeks,days_per_week,client_id,is_template,is_active,created_at")
@@ -53,6 +58,7 @@ export default function Programas() {
     const sb = getSupabase();
     if (!sb) return;
     const { data: u } = await sb.auth.getUser();
+    if (!u.user) { setMsg("Inicia sesión como entrenadora para crear."); return; }
     const { data, error } = await sb.from("programs").insert({
       coach_id: u.user!.id, client_id: clientId, title: title.trim(),
       weeks, days_per_week: days,
@@ -69,6 +75,7 @@ export default function Programas() {
     const sb = getSupabase();
     if (!sb) { setBusy(false); return; }
     const { data: u } = await sb.auth.getUser();
+    if (!u.user) { setBusy(false); setMsg("Inicia sesión como entrenadora para crear."); return; }
     const asTemplate = target === "template";
     const newTitle = asTemplate
       ? `${source.title} (plantilla)`
@@ -125,6 +132,7 @@ export default function Programas() {
 
   async function remove(p: Program) {
     setMsg(null);
+    if (!del.confirm(p.id)) return;
     const sb = getSupabase();
     if (!sb) return;
     // primero los ejercicios del programa, luego el programa
@@ -169,10 +177,7 @@ export default function Programas() {
             className={`chip shrink-0 gap-1.5 ${open ? "chip-active" : "bg-surface text-ink"}`}>
             <Copy size={14} strokeWidth={1.75} aria-hidden /> {p.is_template ? "Usar" : "Duplicar"}
           </button>
-          <button onClick={() => remove(p)} aria-label={`Borrar ${p.title}`} title="Borrar"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:text-danger">
-            <Trash2 {...ICON} />
-          </button>
+          <DeleteButton armed={del.pending === p.id} onClick={() => remove(p)} label={`Borrar ${p.title}`} />
         </div>
         {open && (
           <div className="card mt-2 flex items-center gap-2 p-2">

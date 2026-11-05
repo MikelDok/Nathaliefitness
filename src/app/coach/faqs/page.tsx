@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, Eye, EyeOff, HelpCircle, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, HelpCircle, Pencil } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { useConfirm } from "@/lib/useConfirm";
+import DeleteButton from "@/components/DeleteButton";
 import { EmptyState, ICON, PageHeader } from "@/components/ui";
 
 const iconBtn = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted disabled:opacity-30";
@@ -18,7 +20,7 @@ export default function FaqsCoach() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editQ, setEditQ] = useState("");
   const [editA, setEditA] = useState("");
-  const [confirmDel, setConfirmDel] = useState<string | null>(null);
+  const del = useConfirm(); // borrado con doble toque
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,15 +98,10 @@ export default function FaqsCoach() {
 
   /** Borrar pide un segundo toque (sin diálogos del navegador). */
   async function remove(f: Faq) {
-    if (confirmDel !== f.id) {
-      setConfirmDel(f.id);
-      setTimeout(() => setConfirmDel((cur) => (cur === f.id ? null : cur)), 4000);
-      return;
-    }
+    if (!del.confirm(f.id)) return;
     const sb = getSupabase();
     if (!sb) return;
     const { error } = await sb.from("faqs").delete().eq("id", f.id);
-    setConfirmDel(null);
     if (error) { setMsg("No se pudo borrar."); return; }
     setFaqs((fs) => fs.filter((x) => x.id !== f.id));
   }
@@ -170,16 +167,7 @@ export default function FaqsCoach() {
                       <button onClick={() => startEdit(f)} aria-label={`Editar: ${f.question}`} title="Editar" className={iconBtn}>
                         <Pencil {...ICON} />
                       </button>
-                      {confirmDel === f.id ? (
-                        <button onClick={() => remove(f)} className="chip min-h-9 bg-danger/15 px-3 text-danger">
-                          ¿Borrar? Toca otra vez
-                        </button>
-                      ) : (
-                        <button onClick={() => remove(f)} aria-label={`Borrar: ${f.question}`} title="Borrar"
-                          className={`${iconBtn} hover:text-danger`}>
-                          <Trash2 {...ICON} />
-                        </button>
-                      )}
+                      <DeleteButton armed={del.pending === f.id} onClick={() => remove(f)} label={`Borrar: ${f.question}`} />
                     </div>
                   </div>
                 )}

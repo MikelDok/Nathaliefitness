@@ -57,7 +57,7 @@ export default function InformeProgreso({ params }: { params: Promise<{ id: stri
 
       <article className="mx-auto max-w-3xl rounded-xl bg-[#ffffff] p-8 text-[#111111] print:rounded-none print:p-0">
         <header className="border-b border-[#dddddd] pb-4">
-          <h1 className="text-xl font-bold">Informe de progreso</h1>
+          <h1 className="font-sans text-xl font-bold normal-case leading-normal tracking-normal">Informe de progreso</h1>
           <p className="mt-1 text-lg">{profile?.full_name || "Clienta"}</p>
           <p className="mt-1 text-xs text-[#666666]">
             {rows.length > 0

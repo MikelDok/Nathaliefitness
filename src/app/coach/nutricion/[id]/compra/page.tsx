@@ -173,7 +173,7 @@ export default function CompraCoach({ params }: { params: Promise<{ id: string }
       {/* ---------- Impresión: hoja blanca como el informe (sin tokens del tema) ---------- */}
       <article className="hidden text-[#111111] print:block">
         <header className="border-b border-[#dddddd] pb-3">
-          <h1 className="text-xl font-bold">Lista de la compra</h1>
+          <h1 className="font-sans text-xl font-bold normal-case leading-normal tracking-normal">Lista de la compra</h1>
           <p className="mt-1">{plan.title}{clientName ? ` · ${clientName}` : ""}</p>
           <p className="mt-1 text-xs text-[#666666]">{subtitleCap}</p>
         </header>
