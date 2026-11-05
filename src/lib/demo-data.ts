@@ -117,3 +117,23 @@ export function demoLoadLogs(): LoadLog[] {
       sets: [{ reps: 8, kg: kg > 0 ? kg - 5 : 0 }, { reps: 8, kg: kg > 0 ? kg - 2.5 : 0 }, { reps: 6, kg }],
     })));
 }
+
+/**
+ * Biblioteca de ejercicios de la entrenadora en demo (guía de ejercicios):
+ * los del programa de ejemplo más algunos de otros grupos.
+ */
+export function demoLibrary(): { id: string; name: string; muscle_group: string; video_url: string | null }[] {
+  const fromProgram = demo.exercises.map((e) => ({
+    id: e.id, name: e.name, muscle_group: e.muscle, video_url: e.video || null,
+  }));
+  const extra = [
+    ["l1", "Hip thrust", "Glúteos", true], ["l2", "Peso muerto rumano", "Isquiotibial", true],
+    ["l3", "Elevación de talones", "Gemelos", false], ["l4", "Press de banca", "Pecho", true],
+    ["l5", "Remo con mancuerna", "Espalda", true], ["l6", "Press militar", "Hombros", false],
+    ["l7", "Curl de bíceps", "Bíceps", false], ["l8", "Fondos en banco", "Tríceps", false],
+    ["l9", "Plancha", "Core", true], ["l10", "Sentadilla goblet", "Cuádriceps", true],
+  ] as const;
+  return [...fromProgram, ...extra.map(([id, name, muscle_group, v]) => ({
+    id, name, muscle_group, video_url: v ? "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" : null,
+  }))].sort((a, b) => a.name.localeCompare(b.name, "es"));
+}

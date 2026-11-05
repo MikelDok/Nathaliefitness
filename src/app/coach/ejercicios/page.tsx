@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { ListVideo, Video } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { MUSCLE_GROUPS } from "@/lib/muscles";
 import { useConfirm } from "@/lib/useConfirm";
 import DeleteButton from "@/components/DeleteButton";
 import { EmptyState, PageHeader } from "@/components/ui";
 
 type Exercise = { id: string; name: string; muscle_group: string; video_url: string | null };
 
-const muscles = ["Cuádriceps","Isquiotibial","Glúteos","Espalda","Pecho","Hombros","Bíceps","Tríceps","Core","Cardio","Movilidad"];
+// lista única en src/lib/muscles.ts (también la usa el mapa corporal)
+const muscles = MUSCLE_GROUPS;
 
 export default function Ejercicios() {
   const [list, setList] = useState<Exercise[]>([]);

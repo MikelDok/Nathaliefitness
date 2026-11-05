@@ -2,11 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarX2, ChevronRight, Dumbbell } from "lucide-react";
+import { CalendarX2, ChevronRight, Dumbbell, PersonStanding } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
 import { CheckDot, EmptyState, ICON, PageHeader, chip } from "@/components/ui";
+import MuscleDay from "@/components/MuscleDay";
+
+/** Acceso a la guía de ejercicios (cabecera de Entreno). */
+const guiaLink = (
+  <Link href="/guia" className="chip mt-1 shrink-0 gap-1.5 bg-surface text-ink">
+    <PersonStanding size={16} strokeWidth={1.75} aria-hidden /> Guía
+  </Link>
+);
 
 type Program = { id: string; title: string; weeks: number; days_per_week: number };
 type Row = {
@@ -77,7 +85,7 @@ export default function Entreno() {
     const p = demo.program;
     return (
       <main className="space-y-7">
-        <PageHeader eyebrow="Entrenamiento" title={p.title} />
+        <PageHeader eyebrow="Entrenamiento" title={p.title} right={guiaLink} />
         <div className="space-y-2">
           <div className="-mx-5 flex gap-1 overflow-x-auto px-5">
             {p.weeks.map((w) => (
@@ -90,6 +98,7 @@ export default function Entreno() {
             ))}
           </div>
         </div>
+        <MuscleDay label="Este día trabajas" groups={demo.exercises.map((e) => e.muscle)} />
         <section>
           <p className="eyebrow border-b border-line pb-2">{demo.exercises.length} ejercicios</p>
           <ul className="divide-y divide-line">
@@ -111,7 +120,7 @@ export default function Entreno() {
   if (!program) {
     return (
       <main className="space-y-7">
-        <PageHeader eyebrow="Entrenamiento" title="Tu programa" />
+        <PageHeader eyebrow="Entrenamiento" title="Tu programa" right={guiaLink} />
         <EmptyState icon={CalendarX2}>
           Tu entrenadora aún no te ha asignado un programa. Aparecerá aquí en cuanto lo cree.
         </EmptyState>
@@ -123,7 +132,7 @@ export default function Entreno() {
 
   return (
     <main className="space-y-7">
-      <PageHeader eyebrow="Entrenamiento" title={program.title} />
+      <PageHeader eyebrow="Entrenamiento" title={program.title} right={guiaLink} />
 
       <div className="space-y-2">
         <div className="-mx-5 flex gap-1 overflow-x-auto px-5" role="tablist" aria-label="Semanas">
@@ -141,6 +150,8 @@ export default function Entreno() {
           ))}
         </div>
       </div>
+
+      <MuscleDay label="Este día trabajas" groups={dayRows.map((r) => r.exercises?.muscle_group)} />
 
       {dayRows.length === 0 ? (
         <EmptyState icon={Dumbbell}>Esta sesión aún no tiene ejercicios.</EmptyState>

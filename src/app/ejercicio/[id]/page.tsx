@@ -3,6 +3,8 @@
 import { use, useEffect, useState } from "react";
 import { Check, Trophy, VideoOff } from "lucide-react";
 import { CheckDot, ICON, PageHeader } from "@/components/ui";
+import BodyMap from "@/components/BodyMapLazy";
+import { viewOf, zonesOf } from "@/lib/muscles";
 import { fmtNum } from "@/lib/progress";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
@@ -129,7 +131,10 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
 
   return (
     <main className="mx-auto max-w-md space-y-7 px-5 pb-56 pt-6">
-      <PageHeader back="/entreno" title={name}>
+      <PageHeader back="/entreno" title={name}
+        right={zonesOf(muscle).length > 0
+          ? <BodyMap view={viewOf(muscle)} size={120} highlighted={zonesOf(muscle)} />
+          : undefined}>
         {muscle} · {scheme} · descanso {restSec} s
       </PageHeader>
 

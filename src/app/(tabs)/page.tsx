@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, Check, ChevronRight, ClipboardCheck, MessageCircle, Scale } from "lucide-react";
 import Ring from "@/components/Ring";
+import MuscleDay from "@/components/MuscleDay";
 import WaterCard from "@/components/WaterCard";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
@@ -51,6 +52,8 @@ type Today = {
   nextAppt: Appointment | null;
   pendingAppt: number;
   lastWeight: number | null;
+  /** grupos musculares de la sesión de hoy; null si es descanso o no hay programa */
+  todayGroups: (string | null)[] | null;
 };
 
 export default function Inicio() {
@@ -64,6 +67,7 @@ export default function Inicio() {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [nextAppt, setNextAppt] = useState<Appointment | null>(null);
   const [pendingAppt, setPendingAppt] = useState(0);
+  const [todayGroups, setTodayGroups] = useState<(string | null)[] | null>(null);
   const [loading, setLoading] = useState(requireAuth);
 
   useEffect(() => {
@@ -107,6 +111,20 @@ export default function Inicio() {
       setPlan((prog as unknown as Plan) || null);
       setNextAppt((nextAp as Appointment | null) || null);
       setPendingAppt(pendingAp);
+
+      // "Hoy trabajas": la sesión de hoy (o, sin días asignados, la que abre
+      // Entreno: semana 1, día 1), solo con los ejercicios visibles
+      const p = prog as unknown as Plan | null;
+      if (p) {
+        const s = p.weekdays?.length ? sessionOn(p, new Date()) : { week: 1, day: 1 };
+        if (s) {
+          const { data: pe } = await sb.from("program_exercises")
+            .select("exercises(muscle_group)")
+            .eq("program_id", p.id).eq("hidden", false).eq("week", s.week).eq("day", s.day);
+          type PE = { exercises: { muscle_group: string | null } | null };
+          setTodayGroups(((pe as unknown as PE[]) || []).map((r) => r.exercises?.muscle_group ?? null));
+        }
+      }
       setLoading(false);
     })();
   }, []);
@@ -142,6 +160,7 @@ export default function Inicio() {
           cta: "Continuar",
           habits, checkinSent: false, unread: 0, nextAppt: null, pendingAppt: 0,
           lastWeight: demo.progress.weightNow,
+          todayGroups: demo.exercises.map((e) => e.muscle),
         }}
       />
     );
@@ -174,7 +193,7 @@ export default function Inicio() {
           ? "Tu entrenadora te lo asignará pronto"
           : scheduled ? `${programTitle} · ${logsText}` : logsText,
         cta: !programTitle ? null : dayTotal > 0 && dayDone === dayTotal ? "Ver entreno" : logsToday > 0 ? "Continuar" : "Empezar",
-        habits, checkinSent, unread, nextAppt, pendingAppt, lastWeight,
+        habits, checkinSent, unread, nextAppt, pendingAppt, lastWeight, todayGroups,
       }}
     />
   );
@@ -219,6 +238,9 @@ function TodayView({ data: d, onToggle }: { data: Today; onToggle: (h: Habit) =>
           )}
         </div>
       </section>
+
+      {/* ---------- Hoy trabajas (no sale en descanso ni sin programa) ---------- */}
+      {d.todayGroups && <MuscleDay groups={d.todayGroups} />}
 
       {/* ---------- Hábitos: lista plana ---------- */}
       <section>

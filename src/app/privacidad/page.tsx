@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const sections: { title: string; body: React.ReactNode }[] = [
@@ -115,6 +116,9 @@ export default function Privacidad() {
       <button onClick={back} className="mt-8 w-full py-2 text-center text-xs text-muted">
         Volver
       </button>
+      <p className="mt-2 text-center text-[11px] text-muted">
+        Ilustraciones anatómicas: <Link href="/creditos" className="underline">ver créditos</Link>
+      </p>
     </main>
   );
 }

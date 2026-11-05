@@ -79,7 +79,8 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
     de Inicio en `src/lib/quotes.ts` (7, una por día de la semana).
 - **Supabase** (`@supabase/supabase-js` 2.112): Auth email+contraseña,
   Postgres con RLS, Storage, Realtime (chat).
-- Otras: `lucide-react` (iconos), `@zxing/browser` (código de barras → Open Food Facts), `xlsx`
+- Otras: `lucide-react` (iconos), `react-muscle-highlighter` (mapa corporal),
+  `@zxing/browser` (código de barras → Open Food Facts), `xlsx`
   (exportar progreso a Excel desde la ficha de la clienta), `recharts`
   (gráficas de progreso).
 - Despliegue: **Vercel**, se redespliega solo con cada push a `main` en
@@ -106,11 +107,13 @@ src/app/
   recuperar/             Pedir enlace de recuperación (público)
   nueva-contrasena/      Destino del enlace del correo (público)
   privacidad/            Política de privacidad piloto (público)
+  creditos/              Licencias de terceros (público, lee THIRD_PARTY_NOTICES.md)
   (tabs)/                Clienta, con AuthGate + BottomNav
     page.tsx             Inicio
     entreno/  progreso/  nutricion/  diario/  compra/
     habitos/  checkin/   mensajes/   agenda/  perfil/
     sugerencias/  faqs/  (se llega desde Perfil; diario/ sin accesos, oculto)
+    guia/                Guía de ejercicios con mapa corporal (desde Entreno)
   ejercicio/[id]/        Detalle de ejercicio + registro de series
   coach/                 Entrenadora, con CoachGate
     page.tsx             Panel (lista de clientas)
@@ -187,6 +190,22 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   Permisos de columna: insert solo de `client_id, kind, body, screen` y update
   solo de `status, coach_reply`; `updated_at` lo pone un trigger. Tipos y
   estados en `src/lib/suggestions.ts`.
+- Mapa corporal: `src/lib/muscles.ts` es la fuente única (zonas, grupos de la
+  biblioteca `MUSCLE_GROUPS` que usa el panel, mapeo grupo → zonas y palabra
+  de "Hoy trabajas"; normaliza mayúsculas y tildes; Cardio y Movilidad sin
+  zona). `BodyMap` envuelve `react-muscle-highlighter` (modelo femenino):
+  la librería solo acepta colores, así que lee los tokens con
+  `getComputedStyle` y repinta al cambiar `data-theme` (oscuro: cuerpo en
+  raised, músculo gris entre line y muted, resaltado al 85 %; claro: surface,
+  raised y 60 %). Añade el teclado y ARIA que la librería no trae. Úsalo
+  siempre con `BodyMapLazy` (`next/dynamic`, `ssr:false`): ~59 KB gzip que
+  solo cargan Guía, Inicio, Entreno y el detalle de ejercicio. Los dibujos
+  son MIT (react-native-body-highlighter vía react-muscle-highlighter):
+  mantener `THIRD_PARTY_NOTICES.md` y la página `/creditos`, enlazada desde
+  `/privacidad`. Usos: `/guia` (biblioteca de su coach por zona, vídeo en
+  hoja inferior, sin registro), "Hoy trabajas" en Inicio y "Este día
+  trabajas" en Entreno (`MuscleDay`, solo ejercicios visibles; no sale en
+  descanso ni sin programa) y mini silueta en el detalle de ejercicio.
 - FAQs (`faqs`, 0013): la coach gestiona las suyas; la clienta lee solo las
   `published` de su coach (mismo patrón que `exercises`). Orden por `position`.
 
@@ -253,6 +272,8 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
   fecha de inicio) y lista de la compra en el panel (copiar e imprimir).
 - Rediseño visual completo (3 encargos): sistema base, pantallas de la
   clienta y panel de la coach.
+- Mapa corporal: guía de ejercicios por músculo, "Hoy trabajas" y grupos
+  Gemelos y Antebrazos en la biblioteca.
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los

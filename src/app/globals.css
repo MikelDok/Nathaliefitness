@@ -96,6 +96,10 @@ h1 { font-family: var(--font-display); font-weight: 700; text-transform: upperca
 .range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 9999px; background: var(--color-accent); border: 0; }
 .range::-moz-range-thumb { width: 22px; height: 22px; border-radius: 9999px; background: var(--color-accent); border: 0; }
 
+/* Mapa corporal (BodyMap): foco visible en las zonas */
+.bodymap path[tabindex]:focus { outline: none; }
+.bodymap path[tabindex]:focus-visible { stroke: var(--color-ink); stroke-width: 3px; }
+
 /* Campo de formulario sin borde */
 .field {
   width: 100%; border-radius: 12px; background: var(--color-surface);
