@@ -1,111 +1,86 @@
 import Link from "next/link";
+import {
+  Bell, CalendarDays, ChevronRight, ClipboardCheck, HelpCircle, Lightbulb, MessageCircle,
+  Palette, Salad, Shield, type LucideIcon,
+} from "lucide-react";
 import ProfileName from "@/components/ProfileName";
 import LogoutButton from "@/components/LogoutButton";
 import ChangePassword from "@/components/ChangePassword";
 import GoalsEditor from "@/components/GoalsEditor";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import { ICON } from "@/components/ui";
 import { demo } from "@/lib/demo-data";
 import { requireAuth } from "@/lib/config";
 
 // Entradas sin pantalla todavía: se muestran como texto, no como botones.
-const soon = [
-  "Preferencias alimentarias",
-  "Notificaciones",
+const soon: { label: string; Icon: LucideIcon }[] = [
+  { label: "Preferencias alimentarias", Icon: Salad },
+  { label: "Notificaciones", Icon: Bell },
 ];
+
+/** Fila de la lista de Perfil (las de ChangePassword, GoalsEditor y LogoutButton usan las mismas medidas). */
+function RowLink({ href, Icon, children }: { href: string; Icon: LucideIcon; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="flex w-full items-center gap-3 py-3.5 text-left text-sm">
+      <Icon {...ICON} className="shrink-0 text-muted" />
+      <span className="min-w-0 flex-1">{children}</span>
+      <ChevronRight {...ICON} className="shrink-0 text-muted" />
+    </Link>
+  );
+}
 
 export default function Perfil() {
   return (
-    <main className="space-y-5">
-      <header>
-        <p className="eyebrow">Perfil</p>
-        <h1 className="mt-1 text-2xl font-bold"><ProfileName /></h1>
-        <p className="text-sm text-muted">{demo.client.coach}</p>
+    <main className="space-y-7">
+      <header className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="eyebrow">Perfil</p>
+          <h1 className="mt-2 text-[32px]"><ProfileName /></h1>
+          <p className="mt-2 text-sm text-muted">{demo.client.coach}</p>
+        </div>
+        <span aria-hidden
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-raised font-display text-lg font-bold uppercase">
+          <ProfileName initial />
+        </span>
       </header>
 
       {!requireAuth && (
-        <p className="rounded-xl border border-accent/40 bg-accent/10 p-3 text-xs">
+        <p className="rounded-xl bg-accent/15 p-3 text-xs">
           Modo demo: conecta Supabase y quita NEXT_PUBLIC_REQUIRE_AUTH=false para
           activar cuentas reales.
         </p>
       )}
 
-      {requireAuth && (
-        <p className="rounded-xl bg-raised p-3 text-xs text-muted">
-          Sesión real activa. El contenido de las pantallas es de ejemplo hasta
-          que se conecten los datos en la Fase 2.
-        </p>
-      )}
-
-      <ul className="card divide-y divide-line">
-        <li>
-          <Link href="/agenda"
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
-            Agenda y citas
-            <span aria-hidden className="text-muted">›</span>
-          </Link>
-        </li>
-        <li>
-          <Link href="/mensajes"
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
-            Mensajes con tu entrenadora
-            <span aria-hidden className="text-muted">›</span>
-          </Link>
-        </li>
-        <li>
-          <Link href="/checkin"
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
-            Check-in semanal
-            <span aria-hidden className="text-muted">›</span>
-          </Link>
-        </li>
-        {requireAuth && (
-          <li>
-            <ChangePassword />
-          </li>
-        )}
-        <li>
-          <GoalsEditor />
-        </li>
-        <li className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-          Tema
+      <ul className="divide-y divide-line border-y border-line">
+        <li><RowLink href="/agenda" Icon={CalendarDays}>Agenda y citas</RowLink></li>
+        <li><RowLink href="/mensajes" Icon={MessageCircle}>Mensajes con tu entrenadora</RowLink></li>
+        <li><RowLink href="/checkin" Icon={ClipboardCheck}>Check-in semanal</RowLink></li>
+        {requireAuth && <li><ChangePassword /></li>}
+        <li><GoalsEditor /></li>
+        <li className="flex items-center gap-3 py-3 text-sm">
+          <Palette {...ICON} className="shrink-0 text-muted" />
+          <span className="flex-1">Tema</span>
           <ThemeSwitcher />
         </li>
-        {soon.map((label) => (
-          <li key={label}
-            className="flex items-center justify-between px-4 py-3.5 text-sm text-muted">
-            {label}
-            <span className="rounded-full bg-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+        {soon.map(({ label, Icon }) => (
+          <li key={label} className="flex items-center gap-3 py-3.5 text-sm text-muted">
+            <Icon {...ICON} className="shrink-0" />
+            <span className="flex-1">{label}</span>
+            <span className="rounded-full bg-surface px-2.5 py-1 font-display text-[10px] font-semibold uppercase tracking-[0.14em]">
               Próximamente
             </span>
           </li>
         ))}
-        <li>
-          <Link href="/faqs"
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
-            Preguntas frecuentes
-            <span aria-hidden className="text-muted">›</span>
-          </Link>
-        </li>
-        <li>
-          <Link href="/sugerencias"
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
-            Sugerencias
-            <span aria-hidden className="text-muted">›</span>
-          </Link>
-        </li>
-        <li>
-          <Link href="/privacidad"
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm">
-            Privacidad y mis datos
-            <span aria-hidden className="text-muted">›</span>
-          </Link>
-        </li>
-        {requireAuth && (
-          <li>
-            <LogoutButton />
-          </li>
-        )}
+        <li><RowLink href="/faqs" Icon={HelpCircle}>Preguntas frecuentes</RowLink></li>
+        <li><RowLink href="/sugerencias" Icon={Lightbulb}>Sugerencias</RowLink></li>
+        <li><RowLink href="/privacidad" Icon={Shield}>Privacidad y mis datos</RowLink></li>
       </ul>
+
+      {requireAuth && (
+        <div className="border-y border-line">
+          <LogoutButton />
+        </div>
+      )}
     </main>
   );
 }

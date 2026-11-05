@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { CalendarDays, ChevronLeft, ChevronRight, Dumbbell } from "lucide-react";
+import { EmptyState, ICON, PageHeader } from "@/components/ui";
 import Appointments from "@/components/Appointments";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
@@ -69,37 +71,37 @@ export default function Agenda() {
 
   if (!requireAuth) {
     return (
-      <main className="space-y-4">
-        <header><p className="eyebrow">Agenda</p><h1 className="mt-1 text-2xl font-bold">Calendario</h1></header>
-        <p className="rounded-xl border border-accent/40 bg-accent/10 p-3 text-xs">
+      <main className="space-y-7">
+        <PageHeader eyebrow="Agenda" title="Calendario" />
+        <EmptyState icon={CalendarDays}>
           Modo demo: conecta Supabase para ver tus citas y entrenos planificados.
-        </p>
+        </EmptyState>
       </main>
     );
   }
 
   return (
-    <main className="space-y-5">
-      <header><p className="eyebrow">Agenda</p><h1 className="mt-1 text-2xl font-bold">Calendario</h1></header>
+    <main className="space-y-7">
+      <PageHeader eyebrow="Agenda" title="Calendario" />
 
       {loading ? (
         <p className="text-sm text-muted">Cargando tu calendario…</p>
       ) : (
         <>
-          <section className="card p-4">
+          <section className="card">
             <div className="flex items-center justify-between">
               <button onClick={() => shiftMonth(-1)} aria-label="Mes anterior"
-                className="rounded-full border border-line px-3 py-1.5 text-xs text-muted">‹</button>
-              <p className="text-sm font-semibold capitalize">
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-raised text-muted"><ChevronLeft {...ICON} /></button>
+              <p className="font-display text-lg font-bold uppercase tracking-[0.04em]">
                 {month.toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
               </p>
               <button onClick={() => shiftMonth(1)} aria-label="Mes siguiente"
-                className="rounded-full border border-line px-3 py-1.5 text-xs text-muted">›</button>
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-raised text-muted"><ChevronRight {...ICON} /></button>
             </div>
 
             <div className="mt-3 grid grid-cols-7 gap-1 text-center">
               {WEEKDAYS.map((w) => (
-                <span key={w.value} className="text-[10px] font-semibold text-muted">{w.short}</span>
+                <span key={w.value} className="eyebrow text-[10px] tracking-[0.1em]">{w.short}</span>
               ))}
               {cells.map((d, i) => {
                 if (!d) return <span key={`x${i}`} />;
@@ -112,9 +114,9 @@ export default function Agenda() {
                   <button key={dateKey(d)} onClick={() => setSelected(d)}
                     aria-label={`${d.getDate()} de ${month.toLocaleDateString("es-ES", { month: "long" })}`}
                     aria-pressed={isSel}
-                    className={`flex aspect-square flex-col items-center justify-center rounded-lg text-xs
-                      ${isSel ? "bg-accent text-accent-ink font-bold"
-                        : isToday ? "border border-accent text-ink" : "text-ink"}`}>
+                    className={`figure flex aspect-square flex-col items-center justify-center rounded-full text-sm
+                      ${isSel ? "bg-accent text-accent-ink"
+                        : isToday ? "bg-raised text-accent" : "text-ink"}`}>
                     {d.getDate()}
                     <span className="mt-0.5 flex h-1.5 gap-0.5">
                       {session && (
@@ -143,28 +145,29 @@ export default function Agenda() {
             </div>
           </section>
 
-          <section className="card p-4">
-            <p className="eyebrow">
+          <section>
+            <p className="eyebrow border-b border-line pb-2">
               {selected.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
             </p>
             {selSession ? (
-              <Link href="/entreno" className="mt-3 flex items-center justify-between rounded-xl bg-raised p-3">
-                <span className="text-sm">
-                  🏋️ Semana {selSession.week} · Día {selSession.day}
+              <Link href="/entreno" className="flex items-center gap-3 border-b border-line py-3.5">
+                <Dumbbell {...ICON} className="shrink-0 text-muted" />
+                <span className="flex-1 text-sm font-medium">
+                  Semana {selSession.week} · Día {selSession.day}
                 </span>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${selDone ? "bg-ok/15 text-ok" : "bg-accent/15 text-accent"}`}>
+                <span className={`chip min-h-6 shrink-0 px-2.5 text-[10px] ${selDone ? "bg-ok/15 text-ok" : "bg-accent/15 text-accent"}`}>
                   {selDone ? "Hecho" : "Pendiente"}
                 </span>
               </Link>
             ) : (
-              <p className="mt-3 text-sm text-muted">
-                {plan?.weekdays?.length ? "Día de descanso 💤" : "Sin entrenos planificados."}
+              <p className="border-b border-line py-3.5 text-sm text-muted">
+                {plan?.weekdays?.length ? "Día de descanso" : "Sin entrenos planificados."}
               </p>
             )}
             {selAppts.length > 0 && (
-              <ul className="mt-3 space-y-2">
+              <ul className="divide-y divide-line">
                 {selAppts.map((a) => (
-                  <li key={a.id} className="flex items-baseline justify-between gap-2 text-sm">
+                  <li key={a.id} className="flex items-baseline justify-between gap-2 py-3 text-sm">
                     <span className="min-w-0 truncate">{a.title}</span>
                     <span className="shrink-0 text-xs text-muted">{formatTime(a.starts_at)}</span>
                   </li>

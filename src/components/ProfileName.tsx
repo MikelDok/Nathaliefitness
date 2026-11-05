@@ -5,8 +5,9 @@ import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
 
-/** Devuelve el nombre real del usuario con sesión; en demo, el nombre de ejemplo. */
-export default function ProfileName() {
+/** Devuelve el nombre real del usuario con sesión; en demo, el nombre de ejemplo.
+ *  `initial` devuelve solo la inicial (avatar). */
+export default function ProfileName({ initial = false }: { initial?: boolean }) {
   const [name, setName] = useState(requireAuth ? "" : demo.client.name);
 
   useEffect(() => {
@@ -25,5 +26,5 @@ export default function ProfileName() {
     });
   }, []);
 
-  return <>{name}</>;
+  return <>{initial ? name.trim().charAt(0) : name}</>;
 }

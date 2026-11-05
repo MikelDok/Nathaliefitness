@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { ListChecks } from "lucide-react";
+import { EmptyState, PageHeader } from "@/components/ui";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 
@@ -43,27 +44,26 @@ export default function Habitos() {
   }
 
   if (!requireAuth) {
-    return <main><p className="card p-4 text-sm text-muted">Los hábitos funcionan con cuenta real.</p></main>;
+    return (
+      <main className="space-y-7">
+        <PageHeader back="/" eyebrow="Rutina diaria" title="Mis hábitos" />
+        <EmptyState icon={ListChecks}>Los hábitos funcionan con cuenta real.</EmptyState>
+      </main>
+    );
   }
   if (loading) return <main><p className="text-sm text-muted">Cargando…</p></main>;
 
   return (
-    <main className="space-y-5">
-      <header className="flex items-center gap-3">
-        <Link href="/" aria-label="Volver" className="rounded-full border border-line p-2 text-muted">←</Link>
-        <div>
-          <p className="eyebrow">Rutina diaria</p>
-          <h1 className="text-2xl font-bold">Mis hábitos</h1>
-        </div>
-      </header>
+    <main className="space-y-7">
+      <PageHeader back="/" eyebrow="Rutina diaria" title="Mis hábitos" />
 
-      <section className="card space-y-3 p-4">
+      <section className="card space-y-3">
         <p className="eyebrow">Añadir hábito</p>
         <div className="flex gap-2">
           <input value={title} onChange={(e) => setTitle(e.target.value)}
             placeholder="P. ej. 10.000 pasos, 2 L de agua…"
-            className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
-          <button onClick={add} className="shrink-0 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-accent-ink">
+            className="field min-w-0 flex-1 bg-raised" />
+          <button onClick={add} className="btn-primary shrink-0 px-5">
             Añadir
           </button>
         </div>
@@ -71,17 +71,17 @@ export default function Habitos() {
         <p className="text-[11px] text-muted">Tu entrenadora también puede asignarte hábitos; aparecerán aquí.</p>
       </section>
 
-      <section className="card p-4">
-        <p className="eyebrow">Tus hábitos</p>
+      <section>
+        <p className="eyebrow border-b border-line pb-2">Tus hábitos</p>
         {habits.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">Aún no tienes hábitos. El primero es el que más cuesta 😉</p>
+          <EmptyState icon={ListChecks}>Aún no tienes hábitos. El primero es el que más cuesta.</EmptyState>
         ) : (
-          <ul className="mt-3 divide-y divide-line">
+          <ul className="divide-y divide-line">
             {habits.map((h) => (
               <li key={h.id} className="flex items-center justify-between gap-3 py-3">
                 <span className={`text-sm ${h.active ? "" : "text-muted line-through"}`}>{h.title}</span>
                 <button onClick={() => toggleActive(h)}
-                  className="shrink-0 rounded-full border border-line px-3 py-1 text-xs text-muted">
+                  className="chip shrink-0 bg-surface">
                   {h.active ? "Pausar" : "Reactivar"}
                 </button>
               </li>

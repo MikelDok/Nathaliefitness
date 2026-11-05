@@ -4,7 +4,11 @@
 // la entrenadora; asCoach solo decide qué columna de "visto" toca marcar.
 
 import { useCallback, useEffect, useState } from "react";
+import { CalendarPlus, MapPin, NotebookPen, Plus, Video, CalendarDays, CalendarX2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { EmptyState } from "@/components/ui";
+
+const KIND_ICON = { presencial: MapPin, videollamada: Video, otro: CalendarDays } as const;
 import {
   APPOINTMENT_SELECT, KINDS, formatWhen, dateKey,
   type Appointment, type AppointmentKind,
@@ -122,15 +126,17 @@ export default function Appointments({ clientId, asCoach }: { clientId: string; 
   function Row({ a }: { a: Appointment }) {
     const cancelled = a.status === "cancelada";
     const k = KINDS.find((x) => x.value === a.kind);
+    const KindIcon = KIND_ICON[a.kind as keyof typeof KIND_ICON] ?? CalendarDays;
     const isLink = !!a.location && /^https?:\/\//.test(a.location);
     return (
-      <li className="py-3">
-        <div className="flex items-baseline justify-between gap-2">
-          <p className={`min-w-0 text-sm font-medium ${cancelled ? "text-muted line-through" : ""}`}>
-            {k?.icon} {a.title}
+      <li className="py-3.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className={`flex min-w-0 items-center gap-2 text-sm font-medium ${cancelled ? "text-muted line-through" : ""}`}>
+            <KindIcon size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
+            {a.title}
           </p>
           {cancelled && (
-            <span className="shrink-0 rounded-full bg-raised px-2 py-0.5 text-[10px] text-muted">Cancelada</span>
+            <span className="chip min-h-6 shrink-0 bg-surface px-2.5 text-[10px]">Cancelada</span>
           )}
         </div>
         <p className="mt-0.5 text-xs text-muted">
@@ -143,20 +149,25 @@ export default function Appointments({ clientId, asCoach }: { clientId: string; 
               : <span className="text-muted">{a.location}</span>}
           </p>
         )}
-        {a.note && <p className="mt-1 text-xs">📝 {a.note}</p>}
-        <div className="mt-2 flex flex-wrap gap-2">
+        {a.note && (
+          <p className="mt-1 flex items-start gap-1.5 text-xs">
+            <NotebookPen size={14} strokeWidth={1.75} aria-hidden className="mt-px shrink-0 text-muted" />
+            {a.note}
+          </p>
+        )}
+        <div className="mt-2 flex flex-wrap gap-1">
           <button onClick={() => downloadIcs(icsFilename(a.title), appointmentToIcs(a))}
-            className="rounded-full border border-line px-3 py-1.5 text-xs text-muted">
-            📅 Añadir a mi calendario
+            className="chip gap-1.5 bg-surface">
+            <CalendarPlus size={14} strokeWidth={1.75} aria-hidden /> Añadir a mi calendario
           </button>
           {!cancelled && (
             <>
               <button onClick={() => startEdit(a)} disabled={busy}
-                className="rounded-full border border-line px-3 py-1.5 text-xs text-muted disabled:opacity-60">
+                className="chip bg-surface disabled:opacity-60">
                 Editar
               </button>
               <button onClick={() => cancel(a)} disabled={busy}
-                className="rounded-full border border-line px-3 py-1.5 text-xs text-muted disabled:opacity-60">
+                className="chip bg-surface disabled:opacity-60">
                 Cancelar
               </button>
             </>
@@ -167,51 +178,50 @@ export default function Appointments({ clientId, asCoach }: { clientId: string; 
   }
 
   return (
-    <section className="card p-4">
-      <div className="flex items-baseline justify-between gap-2">
+    <section>
+      <div className="flex items-center justify-between gap-2 border-b border-line pb-2">
         <p className="eyebrow">Citas</p>
         <button onClick={() => { if (open) resetForm(); setOpen(!open); }}
-          className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs">
-          {open ? "Cerrar" : "＋ Nueva cita"}
+          className={`chip shrink-0 gap-1 ${open ? "bg-surface" : "chip-active"}`}>
+          {open ? "Cerrar" : <><Plus size={14} strokeWidth={2.25} aria-hidden /> Nueva cita</>}
         </button>
       </div>
 
       {open && (
-        <div className="mt-3 space-y-2 rounded-xl bg-raised p-3">
+        <div className="card mt-3 space-y-2">
           <input value={title} onChange={(e) => setTitle(e.target.value)}
             placeholder="Título (p. ej. Sesión de fuerza)" aria-label="Título de la cita"
-            className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+            className="field bg-raised" />
           <div className="flex flex-wrap gap-2">
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Fecha"
-              className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm" />
+              className="field min-w-0 flex-1 bg-raised" />
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Hora"
-              className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm" />
+              className="field min-w-0 flex-1 bg-raised" />
           </div>
           <div className="flex flex-wrap gap-2">
             <select value={duration} onChange={(e) => setDuration(+e.target.value)} aria-label="Duración"
-              className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm">
+              className="field min-w-0 flex-1 bg-raised">
               {DURATIONS.map((d) => <option key={d} value={d}>{d} min</option>)}
             </select>
             <select value={kind} onChange={(e) => setKind(e.target.value as AppointmentKind)} aria-label="Tipo"
-              className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-sm">
-              {KINDS.map((k) => <option key={k.value} value={k.value}>{k.icon} {k.label}</option>)}
+              className="field min-w-0 flex-1 bg-raised">
+              {KINDS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
             </select>
           </div>
           <input value={location} onChange={(e) => setLocation(e.target.value)}
             placeholder={kind === "videollamada" ? "Enlace de la videollamada" : "Lugar"}
             aria-label={kind === "videollamada" ? "Enlace de la videollamada" : "Lugar"}
-            className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+            className="field bg-raised" />
           <input value={note} onChange={(e) => setNote(e.target.value)}
             placeholder="Nota (opcional)" aria-label="Nota"
-            className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+            className="field bg-raised" />
           <div className="flex gap-2">
-            <button onClick={save} disabled={busy}
-              className="rounded-full bg-accent px-4 py-2 text-xs font-semibold text-accent-ink disabled:opacity-60">
+            <button onClick={save} disabled={busy} className="btn-primary">
               {busy ? "Guardando…" : editingId ? "Guardar cambios" : "Crear cita"}
             </button>
             {editingId && (
               <button onClick={() => { resetForm(); setOpen(false); }}
-                className="rounded-full border border-line px-4 py-2 text-xs text-muted">
+                className="chip min-h-11 bg-raised">
                 Descartar
               </button>
             )}
@@ -219,16 +229,14 @@ export default function Appointments({ clientId, asCoach }: { clientId: string; 
         </div>
       )}
 
-      {err && <p className="mt-3 rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs text-danger">{err}</p>}
+      {err && <p className="mt-3 rounded-xl bg-danger/15 p-3 text-xs text-danger">{err}</p>}
 
       {loading ? (
         <p className="mt-3 text-sm text-muted">Cargando citas…</p>
       ) : upcoming.length === 0 ? (
-        <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">
-          No hay citas próximas. Crea la primera con “＋ Nueva cita”.
-        </p>
+        <EmptyState icon={CalendarX2}>No hay citas próximas. Crea la primera con “Nueva cita”.</EmptyState>
       ) : (
-        <ul className="mt-1 divide-y divide-line">
+        <ul className="divide-y divide-line">
           {upcoming.map((a) => <Row key={a.id} a={a} />)}
         </ul>
       )}

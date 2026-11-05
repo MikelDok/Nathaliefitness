@@ -1,7 +1,9 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import Link from "next/link";
+import { Check, Trophy, VideoOff } from "lucide-react";
+import { CheckDot, ICON, PageHeader } from "@/components/ui";
+import { fmtNum } from "@/lib/progress";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
@@ -122,74 +124,70 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
   }
 
   if (loading) {
-    return <main className="mx-auto max-w-md px-4 pt-6"><p className="text-sm text-muted">Cargando ejercicio…</p></main>;
+    return <main className="mx-auto max-w-md px-5 pt-6"><p className="text-sm text-muted">Cargando ejercicio…</p></main>;
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 pb-48 pt-4">
-      <header className="mb-4 flex items-center gap-3">
-        <Link href="/entreno" aria-label="Volver" className="rounded-full border border-line p-2 text-muted">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-        <div className="min-w-0">
-          <h1 className="truncate text-lg font-bold">{name}</h1>
-          <p className="text-xs text-muted">{muscle} · {scheme} · descanso {restSec} s</p>
-        </div>
-      </header>
+    <main className="mx-auto max-w-md space-y-7 px-5 pb-56 pt-6">
+      <PageHeader back="/entreno" title={name}>
+        {muscle} · {scheme} · descanso {restSec} s
+      </PageHeader>
 
       {video ? (
-        <div className="card overflow-hidden">
+        <div className="overflow-hidden rounded-[14px] bg-surface">
           <iframe title={`Vídeo: ${name}`} src={video} className="aspect-video w-full"
             allow="accelerometer; encrypted-media; picture-in-picture" allowFullScreen />
         </div>
       ) : (
-        <div className="card flex aspect-video items-center justify-center text-sm text-muted">
+        <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-[14px] bg-surface text-sm text-muted">
+          <VideoOff size={32} strokeWidth={1.5} aria-hidden />
           Sin vídeo para este ejercicio
         </div>
       )}
 
       {pr !== null && (
-        <div className="mt-4 flex items-center justify-between rounded-xl bg-raised px-4 py-3">
-          <span className="eyebrow">Marca personal</span>
-          <span className="figure text-lg">🏆 {pr} kg</span>
+        <div className="flex items-center gap-3 border-y border-line py-3">
+          <Trophy {...ICON} className="shrink-0 text-accent" />
+          <span className="eyebrow flex-1">Marca personal</span>
+          <span className="figure text-[32px]">{fmtNum(pr)}<span className="ml-1 text-base text-muted">KG</span></span>
         </div>
       )}
 
-      <section className="card mt-4 p-4">
-        <div className="grid grid-cols-[24px_1fr_1fr_40px] items-center gap-3 text-xs text-muted">
-          <span aria-hidden>#</span><span>Repeticiones</span><span>Peso (kg)</span><span className="sr-only">Hecho</span>
+      <section>
+        <div className="grid grid-cols-[20px_1fr_1fr_40px] items-center gap-3 border-b border-line pb-2">
+          <span aria-hidden className="eyebrow">#</span>
+          <span className="eyebrow">Repeticiones</span>
+          <span className="eyebrow">Peso (kg)</span>
+          <span className="sr-only">Hecho</span>
         </div>
         {sets.map((s, i) => (
-          <div key={i} className="mt-2 grid grid-cols-[24px_1fr_1fr_40px] items-center gap-3">
-            <span className="text-sm text-muted">{i + 1}</span>
+          <div key={i} className="grid grid-cols-[20px_1fr_1fr_40px] items-center gap-3 border-b border-line py-2">
+            <span className="figure text-base text-muted">{i + 1}</span>
             <input type="number" inputMode="numeric" value={s.reps || ""}
               onChange={(e) => update(i, "reps", +e.target.value)}
               aria-label={`Repeticiones serie ${i + 1}`}
-              className="figure rounded-lg border border-line bg-bg px-3 py-2.5 text-center" />
+              className="field figure py-2.5 text-center text-lg" />
             <input type="number" inputMode="decimal" step="0.5" value={s.kg || ""}
               onChange={(e) => update(i, "kg", +e.target.value)}
               aria-label={`Peso serie ${i + 1}`}
-              className="figure rounded-lg border border-line bg-bg px-3 py-2.5 text-center" />
+              className="field figure py-2.5 text-center text-lg" />
             <button onClick={() => checkSet(i)} aria-pressed={s.done} aria-label={`Marcar serie ${i + 1}`}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm ${s.done ? "border-ok bg-ok/15 text-ok" : "border-line text-muted"}`}>
-              ✓
+              className="flex h-10 w-10 items-center justify-center">
+              <CheckDot on={s.done} size={28} />
             </button>
           </div>
         ))}
         {lastSets && (
           <p className="mt-3 text-xs text-muted">
-            Última sesión: {lastSets.map((s) => `${s.reps}×${s.kg}kg`).join(" · ")}
+            Última sesión: {lastSets.map((s) => `${s.reps}×${fmtNum(s.kg)} kg`).join(" · ")}
           </p>
         )}
         <textarea value={note} onChange={(e) => setNote(e.target.value)}
           placeholder="Añade una nota para tu entrenadora" rows={2}
-          className="mt-3 w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+          className="field mt-4" />
         {err && <p className="mt-2 text-xs text-danger">{err}</p>}
-        <button onClick={save} disabled={saving || saved}
-          className="mt-3 w-full rounded-full bg-accent py-3 font-semibold text-accent-ink disabled:opacity-60">
-          {saved ? "Guardado ✓" : saving ? "Guardando…" : "Guardar registro"}
+        <button onClick={save} disabled={saving || saved} className="btn-primary mt-4 w-full">
+          {saved ? <><Check size={18} strokeWidth={2.5} aria-hidden /> Guardado</> : saving ? "Guardando…" : "Guardar registro"}
         </button>
         {saved && isReal && (
           <p className="mt-2 text-center text-xs text-ok">Registro guardado en tu historial.</p>

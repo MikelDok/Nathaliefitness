@@ -13,13 +13,13 @@ export default function ThemeSwitcher({ compact = false }: { compact?: boolean }
 
   return (
     <div role="radiogroup" aria-label="Tema de la app"
-      className={`inline-flex shrink-0 rounded-full border border-line p-0.5 ${compact ? "" : "bg-bg"}`}>
+      className="inline-flex shrink-0 rounded-full bg-surface p-0.5">
       {THEME_OPTIONS.map((o) => (
         <button key={o.value} onClick={() => setPref(o.value)}
           role="radio" aria-checked={pref === o.value}
           aria-label={compact ? `Tema ${o.label.toLowerCase()}` : undefined}
           title={compact ? o.label : undefined}
-          className={`rounded-full font-medium transition-colors ${compact ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-xs"} ${pref === o.value ? "bg-accent text-accent-ink" : "text-muted"}`}>
+          className={`rounded-full font-display font-semibold uppercase tracking-[0.1em] transition-colors ${compact ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-[11px]"} ${pref === o.value ? "bg-accent text-accent-ink" : "text-muted"}`}>
           {compact ? o.short : o.label}
         </button>
       ))}

@@ -21,10 +21,10 @@ export default function MeasurePanel({ measurements }: { measurements: Measureme
 
   return (
     <>
-      <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label="Medida">
+      <div className="-mx-1 mt-3 flex gap-1 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label="Medida">
         {fields.map((f) => (
           <button key={f.key} onClick={() => setKey(f.key)} role="radio" aria-checked={f.key === field.key}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${f.key === field.key ? "bg-raised text-ink ring-1 ring-accent/60" : "border border-line text-muted"}`}>
+            className={`chip shrink-0 ${f.key === field.key ? "chip-active" : ""}`}>
             {f.label}
           </button>
         ))}

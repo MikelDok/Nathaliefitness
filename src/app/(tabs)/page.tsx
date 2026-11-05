@@ -173,7 +173,7 @@ export default function Inicio() {
         detail: !programTitle
           ? "Tu entrenadora te lo asignará pronto"
           : scheduled ? `${programTitle} · ${logsText}` : logsText,
-        cta: dayTotal > 0 && dayDone === dayTotal ? "Ver entreno" : logsToday > 0 ? "Continuar" : "Empezar",
+        cta: !programTitle ? null : dayTotal > 0 && dayDone === dayTotal ? "Ver entreno" : logsToday > 0 ? "Continuar" : "Empezar",
         habits, checkinSent, unread, nextAppt, pendingAppt, lastWeight,
       }}
     />

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Camera, Eye, NotebookPen, Ruler } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { EmptyState, PageHeader } from "@/components/ui";
 import { requireAuth } from "@/lib/config";
 import { demo, demoMeasurements, demoLoadLogs } from "@/lib/demo-data";
 import TrendPanel from "@/components/progress/TrendPanel";
@@ -117,7 +119,7 @@ export default function Progreso() {
     }, { onConflict: "client_id,measured_at" });
     setBusy(false);
     if (error) { setMsg("No se pudo guardar la medición."); return; }
-    setMsg("Medición de hoy guardada ✓");
+    setMsg("Medición de hoy guardada.");
     load();
   }
 
@@ -151,24 +153,24 @@ export default function Progreso() {
     const p = demo.progress;
     const dm = demoMeasurements();
     return (
-      <main className="space-y-5">
-        <header><p className="eyebrow">Mi recorrido</p><h1 className="mt-1 text-2xl font-bold">Progreso</h1></header>
-        <section className="card p-5">
+      <main className="space-y-7">
+        <PageHeader eyebrow="Mi recorrido" title="Progreso" />
+        <section className="card">
           <div className="flex items-baseline justify-between">
             <p className="eyebrow">Peso</p>
-            <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold">{fmtDelta(p.weightNow - p.weightStart)} kg</span>
+            <span className="figure rounded-full bg-raised px-2.5 py-1 text-sm">{fmtDelta(p.weightNow - p.weightStart)} kg</span>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="figure text-4xl">{fmtNum(p.weightNow)}</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="figure text-[40px]">{fmtNum(p.weightNow)}</span>
             <span className="text-sm text-muted">kg · desde {fmtNum(p.weightStart)} kg</span>
           </div>
           <TrendPanel points={seriesOf(dm, "weight_kg")} name="Peso" unit="kg" emptyText="" />
         </section>
-        <section className="card p-5">
+        <section className="card">
           <p className="eyebrow">Medidas</p>
           <MeasurePanel measurements={dm} />
         </section>
-        <section className="card p-5">
+        <section className="card">
           <p className="eyebrow">Cargas por ejercicio</p>
           <LoadsPanel logs={demoLoadLogs()} />
         </section>
@@ -187,22 +189,22 @@ export default function Progreso() {
   const history = [...measurements].reverse().slice(0, 10);
 
   return (
-    <main className="space-y-5">
-      <header><p className="eyebrow">Mi recorrido</p><h1 className="mt-1 text-2xl font-bold">Progreso</h1></header>
+    <main className="space-y-7">
+      <PageHeader eyebrow="Mi recorrido" title="Progreso" />
 
-      <section className="card p-5">
+      <section className="card">
         <div className="flex items-baseline justify-between">
           <p className="eyebrow">Peso</p>
           {diff != null && diff !== 0 && (
-            <span className="rounded-full bg-raised px-2.5 py-1 text-xs font-semibold">
+            <span className="figure rounded-full bg-raised px-2.5 py-1 text-sm">
               {fmtDelta(diff)} kg
             </span>
           )}
         </div>
         {last != null ? (
           <>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="figure text-4xl">{fmtNum(last)}</span>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="figure text-[40px]">{fmtNum(last)}</span>
               <span className="text-sm text-muted">kg{first != null && first !== last ? ` · desde ${fmtNum(first)} kg` : ""}</span>
             </div>
             <TrendPanel points={seriesOf(measurements, "weight_kg")} name="Peso" unit="kg" emptyText="" />
@@ -217,35 +219,34 @@ export default function Progreso() {
               <input key={f.key} value={form[f.key] || ""} onChange={(e) => setField(f.key, e.target.value)}
                 type="text" inputMode="decimal" placeholder={`${f.label} (${f.unit})`}
                 aria-label={`${f.label} en ${f.unit === "kg" ? "kilogramos" : "centímetros"}`}
-                className="figure min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2.5 text-center text-sm" />
+                className="field figure min-w-0 flex-1 bg-raised py-2.5 text-center text-base" />
             ))}
           </div>
 
           <input value={note} onChange={(e) => setNote(e.target.value)}
             placeholder="Nota (opcional): en ayunas, semana de regla…"
             aria-label="Nota de la medición"
-            className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+            className="field bg-raised" />
 
-          <details className="rounded-lg border border-line">
-            <summary className="cursor-pointer px-3 py-2.5 text-sm text-muted">
+          <details className="rounded-xl bg-raised">
+            <summary className="cursor-pointer px-4 py-3 text-sm text-muted">
               Más medidas (opcional)
               {extrasFilled > 0 && ` · ${extrasFilled} rellena${extrasFilled > 1 ? "s" : ""}`}
             </summary>
             <div className="grid grid-cols-2 gap-2 border-t border-line p-3">
               {EXTRA_FIELDS.map((f) => (
                 <label key={f.key} className="block">
-                  <span className="text-[11px] text-muted">{f.label}</span>
+                  <span className="eyebrow text-[10px]">{f.label}</span>
                   <input value={form[f.key] || ""} onChange={(e) => setField(f.key, e.target.value)}
                     type="text" inputMode="decimal" placeholder={f.unit}
                     aria-label={`${f.label} en centímetros`}
-                    className="figure mt-1 w-full rounded-lg border border-line bg-bg px-2 py-2 text-center text-sm" />
+                    className="field figure mt-1 px-2 py-2 text-center text-base" />
                 </label>
               ))}
             </div>
           </details>
 
-          <button onClick={saveMeasurement} disabled={busy}
-            className="w-full rounded-full bg-accent py-2.5 text-sm font-semibold text-accent-ink disabled:opacity-60">
+          <button onClick={saveMeasurement} disabled={busy} className="btn-primary w-full">
             {busy ? "Guardando…" : "Guardar medición"}
           </button>
           {msg && <p className="text-xs text-muted">{msg}</p>}
@@ -255,28 +256,33 @@ export default function Progreso() {
         </div>
       </section>
 
-      <section className="card p-5">
+      <section className="card">
         <p className="eyebrow">Medidas</p>
         <MeasurePanel measurements={measurements} />
       </section>
 
-      <section className="card p-5">
-        <p className="eyebrow">Historial</p>
+      <section>
+        <p className="eyebrow border-b border-line pb-2">Historial</p>
         {history.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">Aquí aparecerá cada medición que guardes.</p>
+          <EmptyState icon={Ruler}>Aquí aparecerá cada medición que guardes.</EmptyState>
         ) : (
-          <ul className="mt-2 divide-y divide-line">
+          <ul className="divide-y divide-line">
             {history.map((m) => {
               const vals = FIELDS.filter((f) => m[f.key] != null);
               return (
-                <li key={m.id} className="py-2.5">
+                <li key={m.id} className="py-3">
                   <p className="text-sm font-medium">{formatDate(m.measured_at)}</p>
                   {vals.length > 0 && (
                     <p className="mt-0.5 text-xs text-muted">
                       {vals.map((f) => `${f.label} ${fmtNum(m[f.key]!)} ${f.unit}`).join(" · ")}
                     </p>
                   )}
-                  {m.note && <p className="mt-1 text-xs">📝 {m.note}</p>}
+                  {m.note && (
+                    <p className="mt-1 flex items-start gap-1.5 text-xs">
+                      <NotebookPen size={14} strokeWidth={1.75} aria-hidden className="mt-px shrink-0 text-muted" />
+                      {m.note}
+                    </p>
+                  )}
                 </li>
               );
             })}
@@ -289,14 +295,14 @@ export default function Progreso() {
         )}
       </section>
 
-      <section className="card p-5">
+      <section className="card">
         <p className="eyebrow">Fotos de evolución</p>
         {photos.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">Sube tu primera foto: será tu punto de partida.</p>
+          <EmptyState icon={Camera}>Sube tu primera foto: será tu punto de partida.</EmptyState>
         ) : (
           <div className="mt-3 grid grid-cols-3 gap-2">
             {photos.map((p) => (
-              <figure key={p.id} className="overflow-hidden rounded-xl border border-line">
+              <figure key={p.id} className="overflow-hidden rounded-xl bg-raised">
                 {p.url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.url} alt={`Foto ${p.angle} del ${p.taken_at}`} className="aspect-[3/4] w-full object-cover" />
@@ -304,7 +310,10 @@ export default function Progreso() {
                   <div className="flex aspect-[3/4] items-center justify-center bg-raised text-xs text-muted">…</div>
                 )}
                 <figcaption className="px-1.5 py-1 text-center text-[10px] text-muted">
-                  {formatDate(p.taken_at)}{p.shared_with_coach ? " · 👁" : ""}
+                  <span className="inline-flex items-center gap-1">
+                    {formatDate(p.taken_at)}
+                    {p.shared_with_coach && <Eye size={12} strokeWidth={1.75} aria-label="Compartida" />}
+                  </span>
                 </figcaption>
               </figure>
             ))}
@@ -314,9 +323,9 @@ export default function Progreso() {
           <div className="flex gap-2">
             <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)}
               aria-label="Elegir foto"
-              className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-2 text-xs text-muted file:mr-2 file:rounded-full file:border-0 file:bg-raised file:px-3 file:py-1.5 file:text-xs file:text-ink" />
+              className="field min-w-0 flex-1 bg-raised px-3 py-2 text-xs text-muted file:mr-2 file:rounded-full file:border-0 file:bg-surface file:px-3 file:py-1.5 file:text-xs file:text-ink" />
             <select value={angle} onChange={(e) => setAngle(e.target.value)} aria-label="Ángulo"
-              className="rounded-lg border border-line bg-bg px-2 py-2 text-xs">
+              className="field w-auto bg-raised px-3 py-2 text-xs">
               {angles.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
             </select>
           </div>
@@ -326,8 +335,7 @@ export default function Progreso() {
             Compartir esta foto con mi entrenadora para que vea mi progreso.
           </label>
           {photoMsg && <p className="text-xs text-danger">{photoMsg}</p>}
-          <button onClick={uploadPhoto} disabled={busy}
-            className="w-full rounded-full bg-accent py-2.5 text-sm font-semibold text-accent-ink disabled:opacity-60">
+          <button onClick={uploadPhoto} disabled={busy} className="btn-primary w-full">
             {busy ? "Subiendo…" : "Subir foto"}
           </button>
           <p className="text-[11px] text-muted">
@@ -336,7 +344,7 @@ export default function Progreso() {
         </div>
       </section>
 
-      <section className="card p-5">
+      <section className="card">
         <p className="eyebrow">Cargas por ejercicio</p>
         <LoadsPanel logs={loadLogs} />
       </section>

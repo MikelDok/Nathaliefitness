@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
+import { Check } from "lucide-react";
+import { PageHeader } from "@/components/ui";
 
 type CheckIn = {
   id: string; week_start: string;
@@ -96,57 +98,56 @@ export default function Checkin() {
   if (loading) return <main><p className="text-sm text-muted">Cargando…</p></main>;
 
   return (
-    <main className="space-y-5">
-      <header>
-        <p className="eyebrow">Check-in semanal</p>
-        <h1 className="mt-1 text-2xl font-bold">Semana del {weekLabel}</h1>
-      </header>
+    <main className="space-y-7">
+      <PageHeader eyebrow="Check-in semanal" title={`Semana del ${weekLabel}`} />
 
       {submitted && (
-        <p className="rounded-xl bg-ok/10 p-3 text-xs text-ok">
+        <p className="flex items-start gap-2 text-xs text-ok">
+          <Check size={16} strokeWidth={2.5} aria-hidden className="shrink-0" />
           Check-in de esta semana enviado. Puedes editarlo y reenviarlo si quieres.
         </p>
       )}
 
-      <section className="card space-y-4 p-4">
+      <section className="space-y-4">
+        <ul className="divide-y divide-line border-y border-line">
         {fields.map((f) => (
-          <div key={f.key}>
+          <li key={f.key} className="py-3.5">
             <div className="flex items-baseline justify-between">
-              <p className="text-sm font-medium">{f.label}</p>
-              <span className="figure text-sm">{values[f.key]}/5</span>
+              <p className="eyebrow">{f.label}</p>
+              <span className="figure text-[28px]">{values[f.key]}<span className="text-base text-muted">/5</span></span>
             </div>
             <input
               type="range" min={1} max={5} step={1}
               value={values[f.key]}
               onChange={(e) => setValues((v) => ({ ...v, [f.key]: +e.target.value }))}
               aria-label={f.label}
-              className="mt-1 w-full accent-[var(--color-accent)]"
+              className="range mt-2"
             />
-            <div className="flex justify-between text-[10px] text-muted">
+            <div className="mt-1 flex justify-between text-[11px] text-muted">
               <span>{f.low}</span><span>{f.high}</span>
             </div>
-          </div>
+          </li>
         ))}
+        </ul>
 
         <textarea value={difficulties} onChange={(e) => setDifficulties(e.target.value)}
           placeholder="¿Alguna dificultad esta semana? (opcional)" rows={2}
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+          className="field" />
         <textarea value={comments} onChange={(e) => setComments(e.target.value)}
           placeholder="Comentarios para tu entrenadora (opcional)" rows={2}
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm" />
+          className="field" />
         {err && <p className="text-xs text-danger">{err}</p>}
-        <button onClick={submit} disabled={saving}
-          className="w-full rounded-full bg-accent py-3 font-semibold text-accent-ink disabled:opacity-60">
+        <button onClick={submit} disabled={saving} className="btn-primary w-full">
           {saving ? "Enviando…" : submitted ? "Actualizar check-in" : "Enviar check-in"}
         </button>
       </section>
 
       {history.filter((c) => c.coach_reply).length > 0 && (
-        <section className="card p-4">
-          <p className="eyebrow">Respuestas de tu entrenadora</p>
-          <ul className="mt-3 space-y-3">
+        <section>
+          <p className="eyebrow border-b border-line pb-2">Respuestas de tu entrenadora</p>
+          <ul className="divide-y divide-line">
             {history.filter((c) => c.coach_reply).map((c) => (
-              <li key={c.id} className="rounded-xl bg-raised p-3">
+              <li key={c.id} className="py-3.5">
                 <p className="text-xs text-muted">
                   Semana del {new Date(c.week_start).toLocaleDateString("es-ES")}
                 </p>

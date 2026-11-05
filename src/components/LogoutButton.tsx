@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { ICON } from "@/components/ui";
 import { getSupabase } from "@/lib/supabase";
 
 export default function LogoutButton() {
@@ -13,10 +15,10 @@ export default function LogoutButton() {
   return (
     <button
       onClick={signOut}
-      className="flex w-full items-center justify-between px-4 py-3.5 text-left text-sm text-danger"
+      className="flex w-full items-center gap-3 py-3.5 text-left text-sm text-danger"
     >
+      <LogOut {...ICON} className="shrink-0" />
       Cerrar sesión
-      <span aria-hidden className="text-muted">›</span>
     </button>
   );
 }

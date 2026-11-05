@@ -10,7 +10,7 @@ export default function RangePills({ value, onChange, label }: {
     <div className="flex shrink-0 gap-1" role="radiogroup" aria-label={label}>
       {RANGES.map((r) => (
         <button key={r.value} onClick={() => onChange(r.value)} role="radio" aria-checked={value === r.value}
-          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${value === r.value ? "bg-accent text-accent-ink" : "text-muted"}`}>
+          className={`chip min-h-7 px-2.5 ${value === r.value ? "chip-active" : ""}`}>
           {r.label}
         </button>
       ))}

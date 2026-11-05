@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { MessageCircle } from "lucide-react";
 import Chat from "@/components/Chat";
+import { EmptyState, PageHeader } from "@/components/ui";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 
@@ -21,16 +23,13 @@ export default function Mensajes() {
   }, []);
 
   return (
-    <main className="space-y-4">
-      <header>
-        <p className="eyebrow">Mensajes</p>
-        <h1 className="mt-1 text-2xl font-bold">Nathalie</h1>
-      </header>
+    <main className="space-y-7">
+      <PageHeader eyebrow="Mensajes" title="Nathalie" />
 
       {!requireAuth ? (
-        <p className="rounded-xl border border-accent/40 bg-accent/10 p-3 text-xs">
+        <EmptyState icon={MessageCircle}>
           Modo demo: conecta Supabase para escribirte con tu entrenadora.
-        </p>
+        </EmptyState>
       ) : loading ? (
         <p className="text-sm text-muted">Cargando conversación…</p>
       ) : uid ? (

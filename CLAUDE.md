@@ -47,8 +47,19 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
     (`space-y-7`), 16 px dentro de tarjetas.
   - Iconos **lucide-react** a 20 px y trazo 1.75 (22 px en la barra) en vez de
     emojis decorativos de la interfaz. Los emojis solo en contenido que escribe
-    la coach. Pantallas ya migradas: Inicio, BottomNav, login, `/recuperar`,
-    `/nueva-contrasena`, `/privacidad` (el resto, encargos 2 y 3).
+    la coach. Pantallas migradas: todas las de la clienta (Inicio, Entreno,
+    detalle de ejercicio + `RestTimer`, Progreso, Nutrición, Compra, Hábitos,
+    Check-in, Agenda, Mensajes, Sugerencias, FAQs, Perfil), BottomNav, login,
+    `/recuperar`, `/nueva-contrasena`, `/privacidad`. Falta el panel de la
+    coach (encargo 3) y `diario/` (oculto, sin migrar).
+  - Piezas comunes en `src/components/ui.tsx`: `PageHeader` (eyebrow + h1 de
+    32 px, flecha de volver y acción opcionales), `EmptyState` (icono lucide de
+    32 px en muted + una línea, sin caja), `CheckDot` (check redondo relleno en
+    accent), `ICON` (props de lucide: 20 px, trazo 1.75) y `chip(activo)`.
+  - Dentro de una `.card` (surface), los campos y botones secundarios van en
+    `bg-raised` para que se distingan. `.range` da estilo a los deslizadores
+    (check-in). Componentes compartidos con el panel (`Chat`, `Appointments`,
+    paneles de progreso, `ThemeSwitcher`) ya usan el sistema nuevo.
   - `Ring`: 108 px, trazo 12, sin halo, accent (ok con `done`). Frase del día
     de Inicio en `src/lib/quotes.ts` (7, una por día de la semana).
 - **Supabase** (`@supabase/supabase-js` 2.112): Auth email+contraseña,
@@ -225,9 +236,9 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
 - Tema claro/oscuro/sistema (clienta y panel) y decimales con coma.
 - Planes de comida de varias semanas (pestañas en el editor y en Nutrición,
   fecha de inicio) y lista de la compra en el panel (copiar e imprimir).
-- Rediseño visual 1/3: fuentes, tokens, componentes base, Inicio, barra
-  inferior y pantallas de acceso. Pendientes los encargos 2 y 3 (resto de
-  pantallas de la clienta y panel).
+- Rediseño visual 1/3 (fuentes, tokens, componentes base, Inicio, barra
+  inferior y acceso) y 2/3 (resto de pantallas de la clienta). Pendiente el
+  3/3: panel de la coach.
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los

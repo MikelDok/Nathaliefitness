@@ -5,7 +5,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { CheckCheck, ImageOff, Paperclip, SendHorizontal, VideoOff } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { ICON } from "@/components/ui";
 import { CHAT_BUCKET, MESSAGE_SELECT, messageTime, type ChatMessage } from "@/lib/chat";
 import { prepareMedia, uploadMedia } from "@/lib/media";
 
@@ -116,33 +118,34 @@ export default function Chat({ clientId }: { clientId: string }) {
   return (
     <div className="space-y-3">
       <div ref={listRef}
-        className="max-h-[58vh] min-h-[38vh] space-y-2 overflow-y-auto rounded-2xl border border-line bg-surface p-3">
+        className="-mx-1 max-h-[58vh] min-h-[38vh] space-y-2 overflow-y-auto px-1 py-1">
         {loading ? (
           <p className="text-sm text-muted">Cargando mensajes…</p>
         ) : messages.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted">
-            Aún no hay mensajes. Escribe el primero 👋
+            Aún no hay mensajes. Escribe el primero.
           </p>
         ) : (
           messages.map((m) => {
             const mine = m.sender_id === me;
             return (
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${mine ? "bg-accent text-accent-ink" : "bg-raised"}`}>
+                <div className={`max-w-[80%] rounded-[18px] px-3.5 py-2 ${mine ? "rounded-br-md bg-accent text-accent-ink" : "rounded-bl-md bg-surface"}`}>
                   {m.kind === "image" && (m.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={m.url} alt={m.body || "Foto enviada"} className="mb-1 max-h-64 rounded-lg" />
                   ) : (
-                    <p className="mb-1 text-xs italic opacity-70">📷 Foto no disponible</p>
+                    <p className="mb-1 flex items-center gap-1.5 text-xs italic opacity-70"><ImageOff size={14} aria-hidden /> Foto no disponible</p>
                   ))}
                   {m.kind === "video" && (m.url ? (
                     <video src={m.url} controls playsInline className="mb-1 max-h-64 rounded-lg" />
                   ) : (
-                    <p className="mb-1 text-xs italic opacity-70">🎬 Vídeo no disponible</p>
+                    <p className="mb-1 flex items-center gap-1.5 text-xs italic opacity-70"><VideoOff size={14} aria-hidden /> Vídeo no disponible</p>
                   ))}
                   {m.body && <p className="whitespace-pre-wrap break-words text-sm">{m.body}</p>}
-                  <p className={`mt-0.5 text-right text-[10px] ${mine ? "text-accent-ink/70" : "text-muted"}`}>
-                    {messageTime(m.created_at)}{mine && m.read_at ? " ✓✓" : ""}
+                  <p className={`mt-0.5 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-accent-ink/70" : "text-muted"}`}>
+                    {messageTime(m.created_at)}
+                    {mine && m.read_at && <CheckCheck size={12} strokeWidth={2} aria-label="Leído" />}
                   </p>
                 </div>
               </div>
@@ -151,11 +154,11 @@ export default function Chat({ clientId }: { clientId: string }) {
         )}
       </div>
 
-      {err && <p className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs text-danger">{err}</p>}
+      {err && <p className="rounded-xl bg-danger/15 p-3 text-xs text-danger">{err}</p>}
 
       <div className="flex items-center gap-2">
-        <label className={`shrink-0 cursor-pointer rounded-full border border-line px-3 py-2.5 text-sm ${busy ? "opacity-60" : ""}`}>
-          📎
+        <label className={`flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-surface text-muted ${busy ? "opacity-60" : ""}`}>
+          <Paperclip {...ICON} />
           <input type="file" accept="image/*,video/*" className="hidden" disabled={busy}
             aria-label="Adjuntar foto o vídeo"
             onChange={(e) => {
@@ -167,10 +170,10 @@ export default function Chat({ clientId }: { clientId: string }) {
         <input value={text} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendText(); } }}
           placeholder="Escribe un mensaje…" aria-label="Mensaje" disabled={busy}
-          className="min-w-0 flex-1 rounded-full border border-line bg-bg px-4 py-2.5 text-sm" />
-        <button onClick={sendText} disabled={busy || !text.trim()}
-          className="shrink-0 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-accent-ink disabled:opacity-60">
-          {busy ? "…" : "Enviar"}
+          className="field min-w-0 flex-1 rounded-full" />
+        <button onClick={sendText} disabled={busy || !text.trim()} aria-label="Enviar"
+          className="btn-primary h-11 w-11 shrink-0 px-0">
+          {busy ? "…" : <SendHorizontal size={20} strokeWidth={1.75} aria-hidden />}
         </button>
       </div>
       <p className="text-[11px] text-muted">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Droplet, Minus } from "lucide-react";
+import { Check, Droplet, Minus } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 
@@ -90,7 +90,7 @@ export default function WaterCard() {
               aria-label={`Objetivo ${liters(goal)} litros. Cambiar objetivo`}
               className="text-sm text-muted">
               <span className="figure text-base text-ink">{liters(ml)}</span> / {liters(goal)} L
-              {reached && <span className="ml-1 text-ok">✓</span>}
+              {reached && <Check size={14} strokeWidth={2.5} aria-label="Objetivo cumplido" className="ml-1 inline text-ok" />}
             </button>
           </div>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-raised" role="progressbar"

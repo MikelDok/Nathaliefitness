@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Trophy } from "lucide-react";
 import TrendChart from "@/components/charts/TrendChart";
 import { fmtDelta, fmtLongDate, fmtNum, loadsByExercise, topPRs, type LoadLog } from "@/lib/progress";
 
@@ -36,8 +37,9 @@ export default function LoadsPanel({ logs, compact = false }: { logs: LoadLog[];
           {topPRs(series).map((s) => (
             <li key={s.name}>
               <button onClick={() => setName(s.name)} aria-pressed={s.name === current.name}
-                className={`rounded-full px-3 py-1.5 text-xs ${s.name === current.name ? "bg-raised ring-1 ring-accent/60" : "border border-line text-muted"}`}>
-                🏆 {s.name} <span className="figure text-ink">{fmtNum(s.pr)} kg</span>
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs ${s.name === current.name ? "bg-accent text-accent-ink" : "bg-raised text-muted"}`}>
+                <Trophy size={14} strokeWidth={1.75} aria-hidden />
+                {s.name} <span className={`figure text-sm ${s.name === current.name ? "" : "text-ink"}`}>{fmtNum(s.pr)} kg</span>
               </button>
             </li>
           ))}
@@ -45,7 +47,7 @@ export default function LoadsPanel({ logs, compact = false }: { logs: LoadLog[];
       )}
 
       <select value={current.name} onChange={(e) => setName(e.target.value)} aria-label="Ejercicio"
-        className="mt-3 w-full rounded-lg border border-line bg-bg px-3 py-2.5 text-sm">
+        className="field mt-3 bg-raised">
         {series.map((s) => (
           <option key={s.name} value={s.name}>
             {s.name} · {s.sessions} {s.sessions === 1 ? "sesión" : "sesiones"}
@@ -58,8 +60,9 @@ export default function LoadsPanel({ logs, compact = false }: { logs: LoadLog[];
         <span className="text-xs text-muted"> · {fmtLongDate(current.prDate)}</span>
       </p>
       {!compact && several && (lastIsPr || gain > 0) && (
-        <p className="mt-1 text-sm text-accent">
-          {lastIsPr ? "¡Nueva marca personal! 🏆" : `${fmtDelta(gain)} kg desde tu primera sesión 💪`}
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-accent">
+          {lastIsPr && <Trophy size={16} strokeWidth={1.75} aria-hidden />}
+          {lastIsPr ? "¡Nueva marca personal!" : `${fmtDelta(gain)} kg desde tu primera sesión`}
         </p>
       )}
       {compact && several && gain !== 0 && (

@@ -36,7 +36,7 @@ function ChartTooltip({ active, payload, unit }: {
   const d = payload?.[0]?.payload;
   if (!active || !d) return null;
   return (
-    <div className="rounded-lg border border-line bg-raised px-2.5 py-1.5 text-xs shadow-lg">
+    <div className="rounded-lg bg-raised px-2.5 py-1.5 text-xs shadow-lg">
       <p className="text-muted">{fmtLongDate(d.date)}</p>
       <p className="figure text-sm">{fmtNum(d.value)} {unit}</p>
     </div>

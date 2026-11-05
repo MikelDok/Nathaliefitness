@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { ChevronDown, HelpCircle } from "lucide-react";
+import { EmptyState, PageHeader } from "@/components/ui";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
@@ -27,33 +28,28 @@ export default function Faqs() {
   }, []);
 
   return (
-    <main className="space-y-5">
-      <header>
-        <Link href="/perfil" className="text-xs text-muted">‹ Perfil</Link>
-        <h1 className="mt-1 text-2xl font-bold">Preguntas frecuentes</h1>
-      </header>
+    <main className="space-y-7">
+      <PageHeader back="/perfil" eyebrow="Perfil" title="Preguntas frecuentes" />
 
       {loading ? (
         <p className="text-sm text-muted">Cargando…</p>
       ) : faqs.length === 0 ? (
-        <div className="card p-6 text-center">
-          <p className="text-3xl" aria-hidden>❓</p>
-          <p className="mt-2 text-sm text-muted">Tu entrenadora aún no ha publicado preguntas.</p>
-        </div>
+        <EmptyState icon={HelpCircle}>Tu entrenadora aún no ha publicado preguntas.</EmptyState>
       ) : (
-        <ul className="card divide-y divide-line">
+        <ul className="divide-y divide-line border-y border-line">
           {faqs.map((f) => {
             const isOpen = open === f.id;
             return (
               <li key={f.id}>
                 <button onClick={() => setOpen(isOpen ? null : f.id)} aria-expanded={isOpen}
                   aria-controls={`faq-${f.id}`}
-                  className="flex w-full items-start justify-between gap-3 px-4 py-3.5 text-left text-sm font-medium">
+                  className="flex w-full items-start justify-between gap-3 py-4 text-left text-sm font-medium">
                   {f.question}
-                  <span aria-hidden className="shrink-0 text-muted">{isOpen ? "−" : "+"}</span>
+                  <ChevronDown size={20} strokeWidth={1.75} aria-hidden
+                    className={`shrink-0 text-muted transition-transform ${isOpen ? "rotate-180" : ""}`} />
                 </button>
                 {isOpen && (
-                  <p id={`faq-${f.id}`} className="whitespace-pre-line px-4 pb-4 text-sm text-muted">
+                  <p id={`faq-${f.id}`} className="whitespace-pre-line pb-4 pr-8 text-sm text-muted">
                     {f.answer}
                   </p>
                 )}

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { ShoppingCart } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { aggregate, formatItem } from "@/lib/shopping";
 import { currentWeek } from "@/lib/meals";
+import { CheckDot, EmptyState, PageHeader, chip } from "@/components/ui";
 
 type Meal = { week: number; day: number; ingredients: string[] | null };
 
@@ -66,75 +67,68 @@ export default function Compra() {
   if (loading) return <main><p className="text-sm text-muted">Preparando tu lista…</p></main>;
 
   return (
-    <main className="space-y-5">
-      <header className="flex items-center gap-3">
-        <Link href="/nutricion" aria-label="Volver" className="rounded-full border border-line p-2 text-muted">←</Link>
-        <div>
-          <p className="eyebrow">Nutrición</p>
-          <h1 className="text-2xl font-bold">Lista de la compra</h1>
-        </div>
-      </header>
+    <main className="space-y-7">
+      <PageHeader back="/nutricion" eyebrow="Nutrición" title="Lista de la compra" />
 
       {meals.length === 0 ? (
-        <div className="card p-6 text-center">
-          <p className="text-3xl" aria-hidden>🛒</p>
-          <p className="mt-2 text-sm">Tu plan de comidas aún no tiene ingredientes.</p>
-          <p className="mt-1 text-xs text-muted">La lista se genera sola a partir de las recetas de tu plan.</p>
-        </div>
+        <EmptyState icon={ShoppingCart}>
+          Tu plan de comidas aún no tiene ingredientes. La lista se genera sola a partir de sus recetas.
+        </EmptyState>
       ) : (
         <>
-          <section className="card space-y-3 p-4">
+          <section className="space-y-4">
             {weeks > 1 && (
               <div>
                 <p className="eyebrow">Semana</p>
-                <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Semana">
+                <div className="mt-2 flex flex-wrap gap-1" role="radiogroup" aria-label="Semana">
                   {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => (
                     <button key={w} onClick={() => pickWeek(w)} role="radio" aria-checked={w === week}
-                      className={`rounded-full px-4 py-1.5 text-sm font-medium ${w === week ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
+                      className={chip(w === week)}>
                       Semana {w}
                     </button>
                   ))}
                 </div>
               </div>
             )}
+            <div>
             <p className="eyebrow">Toca para incluir o quitar días</p>
             {planDays.length === 0 ? (
-              <p className="rounded-xl bg-raised p-3 text-sm text-muted">Esta semana aún no tiene comidas.</p>
+              <p className="mt-2 text-sm text-muted">Esta semana aún no tiene comidas.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-1">
                 {planDays.map((d) => (
-                  <button key={d} onClick={() => toggleDay(d)} aria-pressed={days.has(d)}
-                    className={`rounded-full px-4 py-1.5 text-sm font-medium ${days.has(d) ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
-                    Día {d} {days.has(d) ? "✓" : ""}
+                  <button key={d} onClick={() => toggleDay(d)} aria-pressed={days.has(d)} className={chip(days.has(d))}>
+                    Día {d}
                   </button>
                 ))}
               </div>
             )}
+            </div>
             <div className="flex items-center gap-3">
-              <p className="text-sm">Para cuántas personas</p>
+              <p className="eyebrow">Personas</p>
               <div className="ml-auto flex items-center gap-2">
                 <button onClick={() => setPersons((p) => Math.max(1, p - 1))} aria-label="Menos personas"
-                  className="h-9 w-9 rounded-full border border-line text-lg">−</button>
-                <span className="figure w-8 text-center text-lg">{persons}</span>
+                  className="h-9 w-9 rounded-full bg-surface text-lg">−</button>
+                <span className="figure w-8 text-center text-2xl">{persons}</span>
                 <button onClick={() => setPersons((p) => Math.min(8, p + 1))} aria-label="Más personas"
-                  className="h-9 w-9 rounded-full border border-line text-lg">+</button>
+                  className="h-9 w-9 rounded-full bg-surface text-lg">+</button>
               </div>
             </div>
           </section>
 
-          <section className="card p-4">
-            <p className="eyebrow">Por comprar ({pending.length})</p>
+          <section>
+            <p className="eyebrow border-b border-line pb-2">Por comprar ({pending.length})</p>
             {pending.length === 0 ? (
-              <p className="mt-3 rounded-xl bg-raised p-4 text-sm text-muted">
-                {items.length === 0 ? "Selecciona al menos un día." : "¡Todo comprado! 🎉"}
+              <p className="py-4 text-sm text-muted">
+                {items.length === 0 ? "Selecciona al menos un día." : "¡Todo comprado!"}
               </p>
             ) : (
-              <ul className="mt-3 divide-y divide-line">
+              <ul className="divide-y divide-line">
                 {pending.map((i) => (
                   <li key={i.key}>
                     <button onClick={() => toggleItem(i.key)}
                       className="flex w-full items-center gap-3 py-3 text-left">
-                      <span aria-hidden className="h-5 w-5 shrink-0 rounded-full border border-line" />
+                      <CheckDot on={false} />
                       <span className="text-sm">{fmt(i)}</span>
                     </button>
                   </li>
@@ -144,14 +138,16 @@ export default function Compra() {
           </section>
 
           {done.length > 0 && (
-            <section className="rounded-2xl border border-ok/30 bg-ok/10 p-4">
-              <p className="eyebrow text-ok">🛒 Lista comprada · {done.length} artículos</p>
-              <ul className="mt-3 divide-y divide-line/50">
+            <section>
+              <p className="eyebrow flex items-center gap-1.5 border-b border-line pb-2">
+                <ShoppingCart size={14} strokeWidth={1.75} aria-hidden /> Lista comprada · {done.length} artículos
+              </p>
+              <ul className="divide-y divide-line">
                 {done.map((i) => (
                   <li key={i.key}>
                     <button onClick={() => toggleItem(i.key)}
-                      className="flex w-full items-center gap-3 py-2.5 text-left">
-                      <span aria-hidden className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-ok bg-ok/20 text-xs text-ok">✓</span>
+                      className="flex w-full items-center gap-3 py-3 text-left">
+                      <CheckDot on />
                       <span className="text-sm text-muted line-through">{fmt(i)}</span>
                     </button>
                   </li>

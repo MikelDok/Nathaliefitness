@@ -2,6 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ChevronDown, Salad, ShoppingCart, UtensilsCrossed } from "lucide-react";
+import { EmptyState, PageHeader, chip } from "@/components/ui";
+
+/** Resumen de macros del día: cifras planas, sin tarjeta. */
+function Macros({ items }: { items: [string, string][] }) {
+  return (
+    <section className="grid grid-cols-4 border-y border-line py-3 text-center" aria-label="Macros del día">
+      {items.map(([k, v]) => (
+        <div key={k}><p className="figure text-2xl">{v}</p><p className="eyebrow mt-1 text-[10px]">{k}</p></div>
+      ))}
+    </section>
+  );
+}
+
+const compraLink = (
+  <Link href="/compra" className="chip shrink-0 gap-1.5 bg-surface text-ink">
+    <ShoppingCart size={16} strokeWidth={1.75} aria-hidden /> Compra
+  </Link>
+);
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
@@ -57,18 +76,14 @@ export default function Nutricion() {
   if (!requireAuth) {
     const d = demo.mealDay;
     return (
-      <main className="space-y-5">
-        <header><p className="eyebrow">Nutrición</p><h1 className="mt-1 text-2xl font-bold">Plan de comidas</h1></header>
-        <section className="card grid grid-cols-4 divide-x divide-line p-4 text-center">
-          {[["Proteínas", `${d.macros.protein} g`], ["Grasas", `${d.macros.fat} g`], ["Carbs", `${d.macros.carbs} g`], ["Calorías", `${d.macros.kcal}`]].map(([k, v]) => (
-            <div key={k}><p className="figure text-lg">{v}</p><p className="mt-0.5 text-[11px] text-muted">{k}</p></div>
-          ))}
-        </section>
-        <ul className="space-y-3">
+      <main className="space-y-7">
+        <PageHeader eyebrow="Nutrición" title="Plan de comidas" right={compraLink} />
+        <Macros items={[["Proteínas", `${d.macros.protein} g`], ["Grasas", `${d.macros.fat} g`], ["Carbs", `${d.macros.carbs} g`], ["Kcal", `${d.macros.kcal}`]]} />
+        <ul className="divide-y divide-line">
           {d.meals.map((m) => (
-            <li key={m.slot} className="card p-4">
+            <li key={m.slot} className="py-3.5">
               <p className="eyebrow">{m.slot}</p>
-              <p className="mt-1 font-semibold leading-snug">{m.name}</p>
+              <p className="mt-1 font-medium leading-snug">{m.name}</p>
               <p className="mt-1 text-xs text-muted">{m.kcal} kcal · {m.protein} g proteína</p>
             </li>
           ))}
@@ -94,74 +109,67 @@ export default function Nutricion() {
   };
 
   return (
-    <main className="space-y-5">
-      <header className="flex items-end justify-between">
-        <div>
-          <p className="eyebrow">Nutrición</p>
-          <h1 className="mt-1 text-2xl font-bold">{plan ? plan.title : "Plan de comidas"}</h1>
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <Link href="/compra"
-            className="rounded-full border border-line px-3 py-2 text-xs font-medium">
-            Compra 🛒
-          </Link>
-        </div>
-      </header>
+    <main className="space-y-7">
+      <PageHeader eyebrow="Nutrición" title={plan ? plan.title : "Plan de comidas"} right={compraLink} />
 
       {!plan ? (
-        <div className="card p-6 text-center">
-          <p className="text-3xl" aria-hidden>🥗</p>
-          <p className="mt-2 text-sm">Tu entrenadora aún no te ha asignado un plan de comidas.</p>
-        </div>
+        <EmptyState icon={Salad}>Tu entrenadora aún no te ha asignado un plan de comidas.</EmptyState>
       ) : (
         <>
+          <div className="space-y-2">
           {weeks > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Semanas">
+            <div className="-mx-5 flex gap-1 overflow-x-auto px-5" role="tablist" aria-label="Semanas">
               {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => (
                 <button key={w} onClick={() => pickWeek(w)} role="tab" aria-selected={w === week}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${w === week ? "bg-raised ring-1 ring-accent/60" : "border border-line text-muted"}`}>
+                  className={chip(w === week)}>
                   Semana {w}
-                  {plan.starts_on && w === currentWeek(plan.starts_on, weeks) && <span className="ml-1 text-[10px] text-accent">· hoy</span>}
+                  {plan.starts_on && w === currentWeek(plan.starts_on, weeks) && (
+                    <span className={`ml-1 ${w === week ? "" : "text-accent"}`}>· hoy</span>
+                  )}
                 </button>
               ))}
             </div>
           )}
           {days.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Días">
+            <div className="-mx-5 flex gap-1 overflow-x-auto px-5" role="tablist" aria-label="Días">
               {days.map((d) => (
-                <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${d === day ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
+                <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day} className={chip(d === day)}>
                   Día {d}
                 </button>
               ))}
             </div>
           )}
+          </div>
 
-          <section className="card grid grid-cols-4 divide-x divide-line p-4 text-center">
-            {[["Proteínas", `${tot("protein_g")} g`], ["Grasas", `${tot("fat_g")} g`], ["Carbs", `${tot("carbs_g")} g`], ["Calorías", `${tot("kcal")}`]].map(([k, v]) => (
-              <div key={k}><p className="figure text-lg">{v}</p><p className="mt-0.5 text-[11px] text-muted">{k}</p></div>
-            ))}
-          </section>
+          <Macros items={[["Proteínas", `${tot("protein_g")} g`], ["Grasas", `${tot("fat_g")} g`], ["Carbs", `${tot("carbs_g")} g`], ["Kcal", `${tot("kcal")}`]]} />
 
           {dayMeals.length === 0 ? (
-            <div className="card p-6 text-center text-sm text-muted">Este día aún no tiene comidas.</div>
+            <EmptyState icon={UtensilsCrossed}>Este día aún no tiene comidas.</EmptyState>
           ) : (
-            <ul className="space-y-3">
-              {dayMeals.map((m) => (
-                <li key={m.id} className="card p-4">
-                  <button onClick={() => setOpen(open === m.id ? null : m.id)} className="w-full text-left">
-                    <p className="eyebrow">{m.slot}</p>
-                    <p className="mt-1 font-semibold leading-snug">{m.name}</p>
-                    <p className="mt-1 text-xs text-muted">
-                      {m.kcal} kcal · P {m.protein_g} · G {m.fat_g} · C {m.carbs_g}
-                      {(m.ingredients?.length || m.instructions) ? (open === m.id ? "  ▲" : "  ▼") : ""}
-                    </p>
+            <ul className="divide-y divide-line">
+              {dayMeals.map((m) => {
+                const more = !!(m.ingredients?.length || m.instructions);
+                return (
+                <li key={m.id} className="py-3.5">
+                  <button onClick={() => setOpen(open === m.id ? null : m.id)} aria-expanded={more ? open === m.id : undefined}
+                    className="flex w-full items-start gap-3 text-left">
+                    <span className="min-w-0 flex-1">
+                      <span className="eyebrow block">{m.slot}</span>
+                      <span className="mt-1 block font-medium leading-snug">{m.name}</span>
+                      <span className="mt-1 block text-xs text-muted">
+                        {m.kcal} kcal · P {m.protein_g} · G {m.fat_g} · C {m.carbs_g}
+                      </span>
+                    </span>
+                    {more && (
+                      <ChevronDown size={20} strokeWidth={1.75} aria-hidden
+                        className={`mt-5 shrink-0 text-muted transition-transform ${open === m.id ? "rotate-180" : ""}`} />
+                    )}
                   </button>
-                  {open === m.id && (m.ingredients?.length || m.instructions) && (
-                    <div className="mt-3 space-y-2 rounded-xl bg-raised p-3">
+                  {open === m.id && more && (
+                    <div className="mt-3 space-y-3 rounded-xl bg-surface p-4">
                       {m.ingredients?.length ? (
                         <div>
-                          <p className="text-xs font-semibold">Ingredientes</p>
+                          <p className="eyebrow">Ingredientes</p>
                           <ul className="mt-1 list-inside list-disc text-xs text-muted">
                             {m.ingredients.map((i, idx) => <li key={idx}>{i}</li>)}
                           </ul>
@@ -169,20 +177,21 @@ export default function Nutricion() {
                       ) : null}
                       {m.instructions && (
                         <div>
-                          <p className="text-xs font-semibold">Instrucciones</p>
+                          <p className="eyebrow">Instrucciones</p>
                           <p className="mt-1 text-xs text-muted">{m.instructions}</p>
                         </div>
                       )}
                     </div>
                   )}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </>
       )}
 
-      <p className="rounded-xl bg-raised p-3 text-xs text-muted">
+      <p className="text-[11px] text-muted">
         Pautas de fitness y bienestar; no sustituyen consejo médico o dietético clínico.
       </p>
     </main>

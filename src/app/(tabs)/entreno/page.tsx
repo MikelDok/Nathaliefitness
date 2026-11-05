@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { CalendarX2, ChevronRight, Dumbbell } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { demo } from "@/lib/demo-data";
+import { CheckDot, EmptyState, ICON, PageHeader, chip } from "@/components/ui";
 
 type Program = { id: string; title: string; weeks: number; days_per_week: number };
 type Row = {
@@ -12,6 +14,21 @@ type Row = {
   set_scheme: string; set_type: string | null;
   exercises: { name: string; muscle_group: string } | null;
 };
+
+/** Fila plana de ejercicio: check, nombre en sans 500, detalle en muted. */
+function ExerciseRow({ href, name, detail, done }: { href: string; name: string; detail: string; done: boolean }) {
+  return (
+    <Link href={href} className="flex items-center gap-3 py-3.5"
+      aria-label={`${name}${done ? " · completado hoy" : ""}`}>
+      <CheckDot on={done} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium">{name}</p>
+        <p className="mt-0.5 truncate text-xs text-muted">{detail}</p>
+      </div>
+      <ChevronRight {...ICON} className="shrink-0 text-muted" />
+    </Link>
+  );
+}
 
 export default function Entreno() {
   const [program, setProgram] = useState<Program | null>(null);
@@ -59,29 +76,31 @@ export default function Entreno() {
   if (!requireAuth) {
     const p = demo.program;
     return (
-      <main className="space-y-5">
-        <header>
-          <p className="eyebrow">Entrenamiento</p>
-          <h1 className="mt-1 text-2xl font-bold">{p.title}</h1>
-        </header>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {p.weeks.map((w) => (
-            <span key={w} className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${w === p.currentWeek ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>Semana {w}</span>
-          ))}
+      <main className="space-y-7">
+        <PageHeader eyebrow="Entrenamiento" title={p.title} />
+        <div className="space-y-2">
+          <div className="-mx-5 flex gap-1 overflow-x-auto px-5">
+            {p.weeks.map((w) => (
+              <span key={w} className={chip(w === p.currentWeek)}>Semana {w}</span>
+            ))}
+          </div>
+          <div className="flex gap-1">
+            {p.days.map((d) => (
+              <span key={d} className={chip(d === p.currentDay)}>Día {d}</span>
+            ))}
+          </div>
         </div>
-        <ul className="space-y-3">
-          {demo.exercises.map((e) => (
-            <li key={e.id}>
-              <Link href={`/ejercicio/${e.id}`} className="card flex items-center gap-4 p-4">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">{e.name}</p>
-                  <p className="mt-0.5 text-xs text-muted">{e.muscle} · {e.type} · {e.scheme}</p>
-                </div>
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm ${e.done ? "border-ok bg-ok/15 text-ok" : "border-line text-muted"}`}>{e.done ? "✓" : "›"}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <section>
+          <p className="eyebrow border-b border-line pb-2">{demo.exercises.length} ejercicios</p>
+          <ul className="divide-y divide-line">
+            {demo.exercises.map((e) => (
+              <li key={e.id}>
+                <ExerciseRow href={`/ejercicio/${e.id}`} name={e.name}
+                  detail={`${e.muscle} · ${e.type} · ${e.scheme}`} done={e.done} />
+              </li>
+            ))}
+          </ul>
+        </section>
       </main>
     );
   }
@@ -91,16 +110,11 @@ export default function Entreno() {
 
   if (!program) {
     return (
-      <main className="space-y-5">
-        <header>
-          <p className="eyebrow">Entrenamiento</p>
-          <h1 className="mt-1 text-2xl font-bold">Tu programa</h1>
-        </header>
-        <div className="card p-6 text-center">
-          <p className="text-3xl" aria-hidden>🗓️</p>
-          <p className="mt-2 text-sm">Tu entrenadora aún no te ha asignado un programa.</p>
-          <p className="mt-1 text-xs text-muted">En cuanto lo cree, aparecerá aquí automáticamente.</p>
-        </div>
+      <main className="space-y-7">
+        <PageHeader eyebrow="Entrenamiento" title="Tu programa" />
+        <EmptyState icon={CalendarX2}>
+          Tu entrenadora aún no te ha asignado un programa. Aparecerá aquí en cuanto lo cree.
+        </EmptyState>
       </main>
     );
   }
@@ -108,55 +122,41 @@ export default function Entreno() {
   const dayRows = rows.filter((r) => r.week === week && r.day === day).sort((a, b) => a.position - b.position);
 
   return (
-    <main className="space-y-5">
-      <header>
-        <p className="eyebrow">Entrenamiento</p>
-        <h1 className="mt-1 text-2xl font-bold">{program.title}</h1>
-      </header>
+    <main className="space-y-7">
+      <PageHeader eyebrow="Entrenamiento" title={program.title} />
 
-      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Semanas">
-        {Array.from({ length: program.weeks }, (_, i) => i + 1).map((w) => (
-          <button key={w} onClick={() => setWeek(w)} role="tab" aria-selected={w === week}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium ${w === week ? "bg-accent text-accent-ink" : "border border-line text-muted"}`}>
-            Semana {w}
-          </button>
-        ))}
+      <div className="space-y-2">
+        <div className="-mx-5 flex gap-1 overflow-x-auto px-5" role="tablist" aria-label="Semanas">
+          {Array.from({ length: program.weeks }, (_, i) => i + 1).map((w) => (
+            <button key={w} onClick={() => setWeek(w)} role="tab" aria-selected={w === week} className={chip(w === week)}>
+              Semana {w}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Días">
+          {Array.from({ length: program.days_per_week }, (_, i) => i + 1).map((d) => (
+            <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day} className={chip(d === day)}>
+              Día {d}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="flex gap-2" role="tablist" aria-label="Días">
-        {Array.from({ length: program.days_per_week }, (_, i) => i + 1).map((d) => (
-          <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium ${d === day ? "bg-raised" : "border border-line text-muted"}`}>
-            Día {d}
-          </button>
-        ))}
-      </div>
-
-      <p className="text-xs text-muted">{dayRows.length} ejercicios</p>
 
       {dayRows.length === 0 ? (
-        <div className="card p-6 text-center text-sm text-muted">Esta sesión aún no tiene ejercicios.</div>
+        <EmptyState icon={Dumbbell}>Esta sesión aún no tiene ejercicios.</EmptyState>
       ) : (
-        <ul className="space-y-3">
-          {dayRows.map((r) => {
-            const done = doneIds.has(r.id);
-            return (
+        <section>
+          <p className="eyebrow border-b border-line pb-2">{dayRows.length} ejercicios</p>
+          <ul className="divide-y divide-line">
+            {dayRows.map((r) => (
               <li key={r.id}>
-                <Link href={`/ejercicio/${r.id}`} className="card flex items-center gap-4 p-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{r.exercises?.name || "Ejercicio"}</p>
-                    <p className="mt-0.5 text-xs text-muted">
-                      {r.exercises?.muscle_group} · {r.set_type || "normal"} · {r.set_scheme}
-                    </p>
-                  </div>
-                  <span aria-label={done ? "Completado hoy" : "Pendiente"}
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm ${done ? "border-ok bg-ok/15 text-ok" : "border-line text-muted"}`}>
-                    {done ? "✓" : "›"}
-                  </span>
-                </Link>
+                <ExerciseRow href={`/ejercicio/${r.id}`} name={r.exercises?.name || "Ejercicio"}
+                  detail={`${r.exercises?.muscle_group ?? ""} · ${r.set_type || "normal"} · ${r.set_scheme}`}
+                  done={doneIds.has(r.id)} />
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ul>
+        </section>
       )}
     </main>
   );
