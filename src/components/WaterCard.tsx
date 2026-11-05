@@ -83,7 +83,7 @@ export default function WaterCard() {
   return (
     <section>
       <div className="flex items-center gap-3">
-        <Droplet size={20} strokeWidth={1.75} aria-hidden className={reached ? "text-ok" : "text-muted"} />
+        <Droplet size={20} strokeWidth={1.75} aria-hidden className={reached ? "text-ok" : "text-accent2"} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
             <p className="eyebrow">Agua</p>
@@ -97,7 +97,7 @@ export default function WaterCard() {
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-raised" role="progressbar"
             aria-valuemin={0} aria-valuemax={goal} aria-valuenow={ml}
             aria-label={`Agua de hoy: ${glasses} vaso${glasses === 1 ? "" : "s"}`}>
-            <div className={`h-full rounded-full transition-[width] ${reached ? "bg-ok" : "bg-accent"}`}
+            <div className={`h-full rounded-full transition-[width] ${reached ? "bg-ok" : "bg-accent2"}`}
               style={{ width: `${pct}%` }} />
           </div>
         </div>

@@ -5,7 +5,8 @@ import { Check, ChevronLeft, type LucideIcon } from "lucide-react";
 export const ICON = { size: 20, strokeWidth: 1.75, "aria-hidden": true } as const;
 
 /** Clase de chip (pestañas de semana/día, filtros). */
-export const chip = (active: boolean) => `chip shrink-0 ${active ? "chip-active" : ""}`;
+export const chip = (active: boolean, alt = false) =>
+  `chip shrink-0 ${active ? "chip-active" : ""} ${alt ? "chip-alt" : ""}`;
 
 /** Cabecera de pantalla: eyebrow + h1, con botón de volver y acción a la derecha opcionales. */
 export function PageHeader({ eyebrow, title, back, right, children }: {

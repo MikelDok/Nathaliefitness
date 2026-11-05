@@ -44,9 +44,10 @@ function mix(a: string, b: string, t: number): string {
 
 /**
  * Colores del tema activo (la librería solo acepta colores, no var()).
- * Oscuro: cuerpo en raised y músculos un gris intermedio entre line y muted
+ * Oscuro: cuerpo en raised y músculos un tono intermedio entre line y muted
  * (line solo queda casi igual que raised), resaltado al 85 %.
- * Claro: cuerpo en surface, músculos en raised, resaltado al 60 %.
+ * Claro: igual pero con algo menos de muted (sobre el rosa claro, un cuerpo
+ * blanco no se distinguía del fondo), resaltado al 60 %.
  */
 function readPalette(): Palette {
   const cs = getComputedStyle(document.documentElement);
@@ -55,7 +56,7 @@ function readPalette(): Palette {
   return dark
     ? { body: v("--color-raised"), muscle: mix(v("--color-line"), v("--color-muted"), 0.3), line: v("--color-line"),
         accent: v("--color-accent"), ink: v("--color-ink"), hiAlpha: 0.85 }
-    : { body: v("--color-surface"), muscle: v("--color-raised"), line: v("--color-line"),
+    : { body: v("--color-raised"), muscle: mix(v("--color-line"), v("--color-muted"), 0.2), line: v("--color-line"),
         accent: v("--color-accent"), ink: v("--color-ink"), hiAlpha: 0.6 };
 }
 

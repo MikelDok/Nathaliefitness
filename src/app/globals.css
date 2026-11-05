@@ -8,41 +8,48 @@
 }
 
 @theme {
-  /* Marca NEA FITNESS: negro neutro + rose gold del logo. Deportivo y minimalista.
-     surface se separa del fondo ~1,15:1 (las tarjetas no llevan borde) y raised un escalón más. */
-  --color-bg: #0b0b0c;
-  --color-surface: #1c1c1f;
-  --color-raised: #25252a;
-  --color-line: #2a2a2f;
-  --color-ink: #f5f2ef;
-  --color-muted: #8e8e94;       /* ≥ 4,5:1 también sobre raised */
-  --color-accent: #dfa08f;      /* rose gold */
-  --color-accent-ink: #1a0f0b;
+  /* Marca NEA FITNESS, misma paleta que la web: berenjena #2B1230, rosa claro
+     #FBE7E1, rose gold #E5A38F, rosa intenso #E8436E y lila #CDBCFF.
+     surface se separa del fondo 1,15:1 (las tarjetas no llevan borde) y raised
+     un escalón más. Todo el texto ≥ 4,5:1 sobre bg, surface, raised y sobre el
+     tinte al 15 % de su color. */
+  --color-bg: #170a1a;          /* berenjena profunda */
+  --color-surface: #2b1630;
+  --color-raised: #38213d;
+  --color-line: #4b3051;
+  --color-ink: #fbf1f3;
+  --color-muted: #bca6b9;
+  --color-accent: #f46a8e;      /* rosa intenso, un punto más claro que el de la web para AA */
+  --color-accent-ink: #2b1230;  /* berenjena sobre el rosa: 5,9:1 */
+  --color-accent2: #cdbcff;     /* lila: solo agua, checks de hábitos y semanas/días de Nutrición */
+  --color-accent2-ink: #2b1230; /* 9,9:1 */
   --color-ok: #7fc29b;
-  --color-danger: #f5a3a3;      /* errores y avisos de riesgo */
+  --color-danger: #ffa066;      /* naranja: distinto del rosa del acento (23° frente a 344°) */
 }
 
 /* Tema claro: mismos tokens redefinidos; todo lo que usa var(--color-…) cambia solo.
    Contraste AA (≥ 4,5:1) de ink, muted, accent, ok y danger sobre bg, surface y raised. */
 html[data-theme="light"] {
-  --color-bg: #f7f7f6;          /* blanco roto neutro */
-  --color-surface: #e7e7e4;
-  --color-raised: #dbdbd7;
-  --color-line: #d0d0cb;
-  --color-ink: #18181a;
-  --color-muted: #5a5a61;
-  --color-accent: #844334;      /* rose gold profundo: AA también sobre su tinte al 15 % */
+  --color-bg: #f8e9e4;          /* rosa claro de la web, un punto más hondo: las tarjetas blancas destacan 1,18:1 */
+  --color-surface: #ffffff;
+  --color-raised: #f2dad3;
+  --color-line: #e9cbc2;
+  --color-ink: #2b1230;         /* berenjena */
+  --color-muted: #6b4f65;
+  --color-accent: #a8193f;      /* rosa intenso profundo: AA también sobre su tinte al 15 % sobre bg */
   --color-accent-ink: #ffffff;
-  --color-ok: #266a43;
-  --color-danger: #a11f18;
+  --color-accent2: #5335b8;     /* violeta */
+  --color-accent2-ink: #ffffff;
+  --color-ok: #1f603b;
+  --color-danger: #9c3e00;      /* naranja tostado */
   color-scheme: light;
 }
 
 html { background: var(--color-bg); color-scheme: dark; }
 
-/* Logo (PNG con fondo negro, sin transparencia): en claro se muestra como
-   una placa oscura redondeada, igual que un icono de app. */
-html[data-theme="light"] .logo-mark {
+/* Logo (PNG con fondo casi negro, sin transparencia): en los dos temas se
+   muestra como una placa redondeada, igual que un icono de app. */
+.logo-mark {
   border-radius: 1.75rem;
   box-shadow: 0 10px 30px -12px rgb(24 24 26 / 0.45);
 }
@@ -88,6 +95,8 @@ h1 { font-family: var(--font-display); font-weight: 700; text-transform: upperca
   text-transform: uppercase; letter-spacing: 0.12em; color: var(--color-muted);
 }
 .chip-active { background: var(--color-accent); color: var(--color-accent-ink); }
+/* Segundo acento (lila): pestañas de semana/día de Nutrición */
+.chip-active.chip-alt { background: var(--color-accent2); color: var(--color-accent2-ink); }
 
 /* Deslizador (check-in): pista raised de 6 px y tirador accent */
 .range { -webkit-appearance: none; appearance: none; width: 100%; height: 24px; background: transparent; }

@@ -263,7 +263,7 @@ function TodayView({ data: d, onToggle }: { data: Today; onToggle: (h: Habit) =>
                 <button onClick={() => onToggle(h)} aria-pressed={h.done}
                   className="flex w-full items-center gap-3 py-3 text-left text-sm">
                   <span aria-hidden
-                    className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full ${h.done ? "bg-accent text-accent-ink" : "border-[1.5px] border-muted/60"}`}>
+                    className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full ${h.done ? "bg-accent2 text-accent2-ink" : "border-[1.5px] border-muted/60"}`}>
                     {h.done && <Check size={14} strokeWidth={3} />}
                   </span>
                   <span className={h.done ? "text-muted" : ""}>{h.title}</span>

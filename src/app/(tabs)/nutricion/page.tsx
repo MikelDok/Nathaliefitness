@@ -121,10 +121,10 @@ export default function Nutricion() {
             <div className="-mx-5 flex gap-1 overflow-x-auto px-5" role="tablist" aria-label="Semanas">
               {Array.from({ length: weeks }, (_, i) => i + 1).map((w) => (
                 <button key={w} onClick={() => pickWeek(w)} role="tab" aria-selected={w === week}
-                  className={chip(w === week)}>
+                  className={chip(w === week, true)}>
                   Semana {w}
                   {plan.starts_on && w === currentWeek(plan.starts_on, weeks) && (
-                    <span className={`ml-1 ${w === week ? "" : "text-accent"}`}>· hoy</span>
+                    <span className={`ml-1 ${w === week ? "" : "text-accent2"}`}>· hoy</span>
                   )}
                 </button>
               ))}
@@ -133,7 +133,7 @@ export default function Nutricion() {
           {days.length > 0 && (
             <div className="-mx-5 flex gap-1 overflow-x-auto px-5" role="tablist" aria-label="Días">
               {days.map((d) => (
-                <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day} className={chip(d === day)}>
+                <button key={d} onClick={() => setDay(d)} role="tab" aria-selected={d === day} className={chip(d === day, true)}>
                   Día {d}
                 </button>
               ))}

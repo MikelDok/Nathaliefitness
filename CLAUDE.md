@@ -19,7 +19,8 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
   tiene cambios respecto a lo conocido; consulta `node_modules/next/dist/docs/`.
 - **React 19.2.8**, **TypeScript 5**, **Tailwind CSS 4** (tokens en
   `src/app/globals.css`: `bg`, `surface`, `raised`, `line`, `ink`, `muted`,
-  `accent` rose gold, `accent-ink`, `ok`, `danger`). **Usa siempre tokens**,
+  `accent` rosa intenso, `accent-ink`, `accent2` lila, `accent2-ink`, `ok`,
+  `danger`). **Usa siempre tokens**,
   nunca colores sueltos (`red-300`, hex…): el tema claro solo redefine esos tokens.
 - **Sistema visual** (rediseño 1/3, "deportivo y minimalista"):
   - Fuentes con `next/font/google` en el layout raíz (autoalojadas):
@@ -28,14 +29,25 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
     0.12–0.18em en etiquetas y -0.01em en títulos) y **Manrope** 400/500/700 →
     `font-sans` (resto del texto). Variables `--font-barlow` / `--font-manrope`
     mapeadas en `@theme inline`.
-  - Tokens oscuros: bg `#0b0b0c`, surface `#1c1c1f`, raised `#25252a`, line
-    `#2a2a2f`, ink `#f5f2ef`, muted `#8e8e94`, accent `#dfa08f`, accent-ink
-    `#1a0f0b`, ok `#7fc29b`, danger `#f5a3a3`. Claros: bg `#f7f7f6`, surface
-    `#e7e7e4`, raised `#dbdbd7`, line `#d0d0cb`, ink `#18181a`, muted `#5a5a61`,
-    accent `#844334`, accent-ink `#fff`, ok `#266a43`, danger `#a11f18`.
-    surface/bg ≈ 1,15:1 (tarjetas sin borde) y raised un escalón más. AA
-    comprobado en ambos (texto sobre bg/surface/raised, acento y danger sobre
-    su tinte al 15 %). Si cambia bg, actualizar `THEME_COLOR` (`src/lib/theme.ts`).
+  - **Paleta de la web de NEA** (berenjena `#2B1230`, rosa claro `#FBE7E1`,
+    rose gold `#E5A38F`, rosa intenso `#E8436E`, lila `#CDBCFF`), ajustada a AA.
+    Tokens oscuros: bg `#170a1a`, surface `#2b1630`, raised `#38213d`, line
+    `#4b3051`, ink `#fbf1f3`, muted `#bca6b9`, accent `#f46a8e`, accent-ink
+    `#2b1230`, accent2 `#cdbcff`, accent2-ink `#2b1230`, ok `#7fc29b`, danger
+    `#ffa066`. Claros: bg `#f8e9e4`, surface `#ffffff`, raised `#f2dad3`, line
+    `#e9cbc2`, ink `#2b1230`, muted `#6b4f65`, accent `#a8193f`, accent-ink
+    `#fff`, accent2 `#5335b8`, accent2-ink `#fff`, ok `#1f603b`, danger
+    `#9c3e00`. surface/bg ≥ 1,15:1 (tarjetas sin borde) y raised un escalón
+    más. AA comprobado en ambos: todo el texto (ink, muted, accent, accent2,
+    ok, danger) ≥ 4,5:1 sobre bg, surface, raised y sobre su tinte al 15 %
+    (encima de bg y de surface). danger es naranja para no confundirse con el
+    acento rosa. Si cambia bg, actualizar `THEME_COLOR` (`src/lib/theme.ts`)
+    y el manifest.
+  - **`accent2` (lila) solo** en: barra e icono del agua (`WaterCard`), checks
+    de hábitos de Inicio y pestañas de semana/día de Nutrición
+    (`chip(activo, true)` → `.chip-alt`). Todo lo demás, `accent`.
+  - Logo (`logo.png`, fondo casi negro): placa `.logo-mark` redondeada en los
+    dos temas.
   - Clases base (en `@layer components`, así las utilidades las ajustan):
     `.card` (surface, sin borde, radio 14, padding 16), `.eyebrow`, `.figure`
     (display 700, tabular-nums), `.btn-primary` (píldora accent, display en
@@ -176,13 +188,13 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   seguridad: la RLS no cambia (los registros antiguos conservan el nombre) y
   Entreno filtra `hidden = false`. Duplicar y copiar semana lo copian.
 - Tema claro/oscuro: `html[data-theme="light"]` redefine los tokens en
-  `globals.css` (contraste AA comprobado; acento claro `#844334`). Preferencia
+  `globals.css` (contraste AA comprobado; acento claro `#a8193f`). Preferencia
   en `localStorage["nea:theme"]` (`dark` por defecto | `light` | `system`),
   lógica en `src/lib/theme.ts`. Script inline en el `<head>` del layout raíz
   (sin parpadeo) + `ThemeSync` (reaplica tras el remontaje de Strict Mode en
   desarrollo y sigue a "Sistema"). Selector `ThemeSwitcher` en Perfil y en la
   cabecera del panel. El informe imprimible es papel blanco en ambos temas
-  (sus hex son intencionados); el manifest se queda oscuro.
+  (sus hex son intencionados); el manifest se queda en el bg oscuro (`#170a1a`).
 - **Fechas de calendario en hora local**: `src/lib/dates.ts` es la fuente
   única (`localDay`, `localMonday`, `parseLocalDay`, `addDays`) para
   `performed_at`, `logged_on` (hábitos y agua), `week_start` (check-ins),
@@ -222,8 +234,8 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   zona). `BodyMap` envuelve `react-muscle-highlighter` (modelo femenino):
   la librería solo acepta colores, así que lee los tokens con
   `getComputedStyle` y repinta al cambiar `data-theme` (oscuro: cuerpo en
-  raised, músculo gris entre line y muted, resaltado al 85 %; claro: surface,
-  raised y 60 %). Añade el teclado y ARIA que la librería no trae. Úsalo
+  raised, músculo entre line y muted al 30 %, resaltado al 85 %; claro: cuerpo
+  en raised, músculo entre line y muted al 20 %, resaltado al 60 %). Añade el teclado y ARIA que la librería no trae. Úsalo
   siempre con `BodyMapLazy` (`next/dynamic`, `ssr:false`): ~59 KB gzip que
   solo cargan Guía, Inicio, Entreno y el detalle de ejercicio. Los dibujos
   son MIT (react-native-body-highlighter vía react-muscle-highlighter):
@@ -326,6 +338,7 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
   (requiere la 0015 aplicada).
 - Fecha "de hoy" en hora local en toda la app (`src/lib/dates.ts`).
 - Bienvenida de 3 pantallas y aviso para instalar la app (requiere la 0016).
+- Paleta de la web de NEA (berenjena, rosa intenso y lila) en la app.
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los
