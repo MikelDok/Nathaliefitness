@@ -40,6 +40,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-dvh">
         <ThemeSync />
+        {/* tema claro + app instalada: fondo berenjena tras la hora y la batería (blancas en iOS) */}
+        <div className="status-bar-strip" aria-hidden="true" />
         {children}
       </body>
     </html>

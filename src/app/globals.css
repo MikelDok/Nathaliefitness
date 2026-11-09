@@ -54,6 +54,23 @@ html { background: var(--color-bg); color-scheme: dark; }
   box-shadow: 0 10px 30px -12px rgb(24 24 26 / 0.45);
 }
 
+/* Franja de la barra de estado. Con black-translucent, iOS pinta la hora y la
+   batería en blanco: en el tema claro no se leen sobre el rosa. Solo en la app
+   instalada y en el tema claro; fija y por encima de todo, así el contenido
+   pasa por debajo al hacer scroll. En Safari normal el inset vale 0. */
+.status-bar-strip { display: none; }
+@media (display-mode: standalone) {
+  html[data-theme="light"] .status-bar-strip {
+    display: block;
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: env(safe-area-inset-top);
+    background: #2b1230; /* berenjena de la marca, igual en los dos temas */
+    z-index: 60;
+    pointer-events: none;
+  }
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-ink);
