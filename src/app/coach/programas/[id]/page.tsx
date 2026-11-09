@@ -4,9 +4,11 @@ import { use, useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { useConfirm } from "@/lib/useConfirm";
 import DeleteButton from "@/components/DeleteButton";
-import { Check, Copy, Dumbbell, Eye, EyeOff, Plus } from "lucide-react";
+import { Copy, Dumbbell, Eye, EyeOff, Plus } from "lucide-react";
 import { EmptyState, ICON, PageHeader, chip } from "@/components/ui";
 import { PLAN_SELECT, WEEKDAYS } from "@/lib/agenda";
+import { DEFAULT_DRAFT, schemeShort } from "@/lib/scheme";
+import SchemeEditor, { fieldsFrom, schemeOf, type PlanFields } from "@/components/SchemeEditor";
 
 type Program = {
   id: string; title: string; weeks: number; days_per_week: number;
@@ -22,7 +24,8 @@ type Row = {
 const parseRest = (v: string): number | null =>
   v.trim() === "" ? null : Math.max(0, Math.round(+v) || 0);
 
-const types = ["normal", "calentamiento", "cardio", "superserie", "dropset"];
+/** Descanso que verá la clienta si la coach no indica ninguno (igual que en el detalle). */
+const DEFAULT_REST = 90;
 
 export default function Constructor({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -32,10 +35,10 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
   const [week, setWeek] = useState(1);
   const [day, setDay] = useState(1);
   const [exId, setExId] = useState("");
-  const [scheme, setScheme] = useState("8/8/6");
-  const [type, setType] = useState("normal");
-  const [rest, setRest] = useState("90");
-  const [restSaved, setRestSaved] = useState<string | null>(null);
+  const [fields, setFields] = useState<PlanFields>({ draft: DEFAULT_DRAFT, type: "normal", rest: "90" });
+  // fila que se está editando y sus valores
+  const [editing, setEditing] = useState<{ id: string; fields: PlanFields } | null>(null);
+  const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const del = useConfirm(); // borrado con doble toque
   const [loading, setLoading] = useState(true);
@@ -83,9 +86,9 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
       exercise_id: exId,
       week, day,
       position: dayRows.length + 1,
-      set_scheme: scheme.trim() || "3x10",
-      set_type: type,
-      rest_seconds: parseRest(rest),
+      set_scheme: schemeOf(fields),
+      set_type: fields.type,
+      rest_seconds: parseRest(fields.rest),
     });
     if (error) { setMsg("No se pudo añadir."); return; }
     load();
@@ -99,17 +102,30 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
     load();
   }
 
-  /** Edición en línea del descanso de una fila; se guarda al salir del campo. */
-  async function saveRest(row: Row, value: string) {
-    const next = parseRest(value);
-    if (next === row.rest_seconds) return;
+  /** Abre (o cierra) el editor de una fila ya añadida. */
+  function toggleEdit(row: Row) {
+    setMsg(null);
+    setEditing((cur) => (cur?.id === row.id
+      ? null
+      : { id: row.id, fields: fieldsFrom(row.set_scheme, row.set_type, row.rest_seconds) }));
+  }
+
+  /** Guarda series, repeticiones, tipo y descanso de la fila en edición. */
+  async function saveEdit() {
+    if (!editing) return;
     const sb = getSupabase();
     if (!sb) return;
-    const { error } = await sb.from("program_exercises").update({ rest_seconds: next }).eq("id", row.id);
-    if (error) { setMsg("No se pudo guardar el descanso."); return; }
-    setRows((rs) => rs.map((r) => (r.id === row.id ? { ...r, rest_seconds: next } : r)));
-    setRestSaved(row.id);
-    setTimeout(() => setRestSaved((cur) => (cur === row.id ? null : cur)), 1500);
+    const patch = {
+      set_scheme: schemeOf(editing.fields),
+      set_type: editing.fields.type,
+      rest_seconds: parseRest(editing.fields.rest),
+    };
+    setSaving(true);
+    const { error } = await sb.from("program_exercises").update(patch).eq("id", editing.id);
+    setSaving(false);
+    if (error) { setMsg("No se pudieron guardar los cambios."); return; }
+    setRows((rs) => rs.map((r) => (r.id === editing.id ? { ...r, ...patch } : r)));
+    setEditing(null);
   }
 
   /** Oculta o vuelve a mostrar un ejercicio en la app de la clienta. */
@@ -197,35 +213,46 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
             ) : (
               <ul className="divide-y divide-line">
                 {dayRows.map((r, i) => (
-                  <li key={r.id} className="flex items-center gap-2 py-3">
-                    <span className="figure w-6 shrink-0 text-lg text-muted">{i + 1}</span>
-                    <div className={`min-w-0 flex-1 ${r.hidden ? "opacity-50" : ""}`}>
-                      <p className="flex items-center gap-2 text-sm font-medium">
-                        <span className="truncate">{exName(r.exercise_id)}</span>
-                        {r.hidden && (
-                          <span className="chip min-h-6 shrink-0 bg-surface px-2.5 text-[10px]">Oculto</span>
-                        )}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted">{r.set_type} · {r.set_scheme}</p>
+                  <li key={r.id} className="py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="figure w-6 shrink-0 text-lg text-muted">{i + 1}</span>
+                      <button type="button" onClick={() => toggleEdit(r)} aria-expanded={editing?.id === r.id}
+                        aria-label={`Editar ${exName(r.exercise_id)}: ${r.set_type || "normal"}, ${schemeShort(r.set_scheme)}, descanso ${r.rest_seconds ?? DEFAULT_REST} s`}
+                        className={`min-w-0 flex-1 text-left ${r.hidden ? "opacity-50" : ""}`}>
+                        <span className="flex items-center gap-2 text-sm font-medium">
+                          <span className="truncate">{exName(r.exercise_id)}</span>
+                          {r.hidden && (
+                            <span className="chip min-h-6 shrink-0 bg-surface px-2.5 text-[10px]">Oculto</span>
+                          )}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-muted">
+                          {r.set_type || "normal"} · {schemeShort(r.set_scheme)} · {r.rest_seconds ?? DEFAULT_REST} s
+                        </span>
+                      </button>
+                      <button onClick={() => toggleHidden(r)} aria-pressed={r.hidden}
+                        aria-label={`${r.hidden ? "Mostrar" : "Ocultar"} a la clienta: ${exName(r.exercise_id)}`}
+                        title={r.hidden ? "Oculto para la clienta" : "Visible para la clienta"}
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${r.hidden ? "bg-surface text-muted" : "text-ink"}`}>
+                        {r.hidden ? <EyeOff {...ICON} /> : <Eye {...ICON} />}
+                      </button>
+                      <DeleteButton armed={del.pending === r.id} onClick={() => remove(r.id)}
+                        label={`Quitar ${exName(r.exercise_id)} de la sesión`} />
                     </div>
-                    <label className="flex shrink-0 items-center gap-1 text-xs text-muted">
-                      <input key={`${r.id}-${r.rest_seconds}`} type="number" inputMode="numeric" min={0} step={15}
-                        defaultValue={r.rest_seconds ?? ""} placeholder="90"
-                        onBlur={(e) => saveRest(r, e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-                        aria-label={`Descanso en segundos de ${exName(r.exercise_id)}`}
-                        className="field figure w-16 px-2 py-1.5 text-center text-base" />
-                      <span className={restSaved === r.id ? "text-ok" : ""}>s</span>
-                      {restSaved === r.id && <Check size={14} strokeWidth={2.5} aria-label="Guardado" className="text-ok" />}
-                    </label>
-                    <button onClick={() => toggleHidden(r)} aria-pressed={r.hidden}
-                      aria-label={`${r.hidden ? "Mostrar" : "Ocultar"} a la clienta: ${exName(r.exercise_id)}`}
-                      title={r.hidden ? "Oculto para la clienta" : "Visible para la clienta"}
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${r.hidden ? "bg-surface text-muted" : "text-ink"}`}>
-                      {r.hidden ? <EyeOff {...ICON} /> : <Eye {...ICON} />}
-                    </button>
-                    <DeleteButton armed={del.pending === r.id} onClick={() => remove(r.id)}
-                      label={`Quitar ${exName(r.exercise_id)} de la sesión`} />
+                    {editing?.id === r.id && (
+                      <div className="card mt-3 space-y-3">
+                        <SchemeEditor idPrefix={`edit-${r.id}`} value={editing.fields}
+                          onChange={(f) => setEditing({ id: r.id, fields: f })} />
+                        {msg && <p className="text-xs text-accent">{msg}</p>}
+                        <div className="flex gap-2">
+                          <button onClick={saveEdit} disabled={saving} className="btn-primary flex-1">
+                            {saving ? "Guardando…" : "Guardar"}
+                          </button>
+                          <button onClick={() => setEditing(null)} className="chip bg-raised px-5 text-ink">
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -242,23 +269,8 @@ export default function Constructor({ params }: { params: Promise<{ id: string }
               {exercises.length === 0 && <option value="">Biblioteca vacía</option>}
               {exercises.map((e) => <option key={e.id} value={e.id}>{e.name} · {e.muscle_group}</option>)}
             </select>
-            <div className="flex gap-2">
-              <input value={scheme} onChange={(e) => setScheme(e.target.value)}
-                placeholder="Esquema (8/8/6, 3x12, 15 min…)" aria-label="Esquema de series"
-                className="field min-w-0 flex-1 bg-raised" />
-              <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Tipo"
-                className="field w-auto bg-raised">
-                {types.map((t) => <option key={t}>{t}</option>)}
-              </select>
-            </div>
-            <label className="flex items-center gap-2 text-xs text-muted">
-              Descanso
-              <input type="number" inputMode="numeric" min={0} step={15} value={rest}
-                onChange={(e) => setRest(e.target.value)} placeholder="90"
-                className="field figure w-20 bg-raised px-2 py-2 text-center text-base" />
-              <span>s entre series</span>
-            </label>
-            {msg && <p className="text-xs text-accent">{msg}</p>}
+            <SchemeEditor idPrefix="add" value={fields} onChange={setFields} />
+            {msg && !editing && <p className="text-xs text-accent">{msg}</p>}
             <button onClick={add} className="btn-primary w-full">
               <Plus size={18} strokeWidth={2.25} aria-hidden /> Añadir a la sesión
             </button>

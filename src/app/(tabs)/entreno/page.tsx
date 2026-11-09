@@ -10,6 +10,7 @@ import { demo } from "@/lib/demo-data";
 import { CheckDot, EmptyState, ICON, PageHeader, chip } from "@/components/ui";
 import MuscleDay from "@/components/MuscleDay";
 import { allDrafts, flushDrafts, toSets } from "@/lib/logDraft";
+import { schemeShort } from "@/lib/scheme";
 
 /** Acceso a la guía de ejercicios (cabecera de Entreno). */
 const guiaLink = (
@@ -112,7 +113,7 @@ export default function Entreno() {
             {demo.exercises.map((e) => (
               <li key={e.id}>
                 <ExerciseRow href={`/ejercicio/${e.id}`} name={e.name}
-                  detail={`${e.muscle} · ${e.type} · ${e.scheme}`} done={e.done} />
+                  detail={`${e.muscle} · ${e.type} · ${schemeShort(e.scheme)}`} done={e.done} />
               </li>
             ))}
           </ul>
@@ -169,7 +170,7 @@ export default function Entreno() {
             {dayRows.map((r) => (
               <li key={r.id}>
                 <ExerciseRow href={`/ejercicio/${r.id}`} name={r.exercises?.name || "Ejercicio"}
-                  detail={`${r.exercises?.muscle_group ?? ""} · ${r.set_type || "normal"} · ${r.set_scheme}`}
+                  detail={`${r.exercises?.muscle_group ?? ""} · ${r.set_type || "normal"} · ${schemeShort(r.set_scheme)}`}
                   done={doneIds.has(r.id)} />
               </li>
             ))}

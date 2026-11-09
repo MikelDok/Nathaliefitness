@@ -10,6 +10,7 @@ import { fmtNum } from "@/lib/progress";
 import { getSupabase } from "@/lib/supabase";
 import { requireAuth } from "@/lib/config";
 import { localDay } from "@/lib/dates";
+import { parseScheme, schemeSummary, targetLabel } from "@/lib/scheme";
 import { demo } from "@/lib/demo-data";
 import { useRestTimer } from "@/lib/useRestTimer";
 import RestTimer from "@/components/RestTimer";
@@ -26,11 +27,25 @@ const EDIT_DELAY = 800;
 type Status = "idle" | "saving" | "saved" | "offline";
 type LogRow = { sets: LogSet[] | null; performed_at: string; note: string | null };
 
-function parseScheme(s: string): number[] {
-  if (s.includes("/")) return s.split("/").map((n) => parseInt(n) || 10);
-  const m = s.match(/^(\d+)\s*[xX]\s*(\d+)$/);
-  if (m) return Array(parseInt(m[1])).fill(parseInt(m[2]));
-  return [10, 10, 10];
+/** Objetivo de cada serie del esquema ("10", "6-10"; en cardio, el texto: una sola fila). */
+function targetsOf(scheme: string): string[] {
+  const p = parseScheme(scheme);
+  return p.kind === "text" ? [p.text] : p.sets.map(targetLabel);
+}
+
+/**
+ * Filas iniciales: una por serie del esquema. Fijas, con su número; rango,
+ * con lo que hizo en esa serie la última sesión o, si no hay, el mínimo;
+ * texto (cardio), vacía. El peso, el de la última sesión.
+ */
+function initialRows(scheme: string, prev: Map<number, LogSet>): SetRow[] {
+  const p = parseScheme(scheme);
+  if (p.kind === "text") return [{ reps: 0, kg: prev.get(1)?.kg ?? 0, done: false }];
+  return p.sets.map((t, i) => {
+    const last = prev.get(i + 1);
+    const reps = t.min === t.max ? t.min : last?.reps || t.min;
+    return { reps, kg: last?.kg ?? 0, done: false };
+  });
 }
 
 /** Series de un registro por número (los antiguos no llevan `n`: cuenta su orden). */
@@ -145,7 +160,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
       setPr(last?.pr ?? null);
       setLastSets(last?.sets ?? null);
       setNext(k >= 0 && k < demo.exercises.length - 1 ? demo.exercises[k + 1].id : null);
-      const rows = parseScheme(ex.scheme).map((reps, i) => ({ reps, kg: last?.sets[i]?.kg ?? 0, done: false }));
+      const rows = initialRows(ex.scheme, byNumber(last?.sets ?? null));
       setsRef.current = rows; noteRef.current = "";
       setSets(rows); setNote(""); setStatus("idle");
       return;
@@ -190,8 +205,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
       setNext(k >= 0 && k < ids.length - 1 ? ids[k + 1] : null);
 
       const prev = byNumber(last);
-      let rows: SetRow[] = parseScheme(pe.set_scheme)
-        .map((reps, i) => ({ reps, kg: prev.get(i + 1)?.kg ?? 0, done: false }));
+      let rows: SetRow[] = initialRows(pe.set_scheme, prev);
       let text = "";
       // si ya hay registro de hoy, se reconstruyen las series marcadas
       const todayLog = list.find((l) => l.performed_at === day);
@@ -227,6 +241,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
   };
 
   const restSec = rest ?? DEFAULT_REST;
+  const targets = targetsOf(scheme);
   const nextIdx = sets.findIndex((s) => !s.done);
   const nextSet = nextIdx >= 0 ? nextIdx + 1 : null;
 
@@ -252,7 +267,7 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
         right={zonesOf(muscle).length > 0
           ? <BodyMap view={viewOf(muscle)} size={120} highlighted={zonesOf(muscle)} />
           : undefined}>
-        {muscle} · {scheme} · descanso {restSec} s
+        {muscle} · {schemeSummary(scheme)} · descanso {restSec} s
       </PageHeader>
 
       {video ? (
@@ -287,18 +302,25 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
           <span className="sr-only">Hecho</span>
         </div>
         {sets.map((s, i) => (
-          <div key={i} className="grid grid-cols-[20px_1fr_1fr_40px] items-center gap-3 border-b border-line py-2">
-            <span className="figure text-base text-muted">{i + 1}</span>
-            <input type="number" inputMode="numeric" value={s.reps || ""}
-              onChange={(e) => edit(i, "reps", +e.target.value)}
-              aria-label={`Repeticiones serie ${i + 1}`}
-              className="field figure py-2.5 text-center text-lg" />
+          <div key={i} className="grid grid-cols-[20px_1fr_1fr_40px] items-end gap-3 border-b border-line py-2">
+            {/* alineado por abajo: el objetivo va encima del campo de repeticiones */}
+            <span className="figure flex h-12 items-center text-base text-muted">{i + 1}</span>
+            <label className="block">
+              <span className="mb-1 block text-center text-[11px] text-muted">
+                {targets[i] ? <>Objetivo <span className="figure text-xs text-ink">{targets[i]}</span></> : " "}
+              </span>
+              <input type="number" inputMode="numeric" value={s.reps || ""}
+                onChange={(e) => edit(i, "reps", +e.target.value)}
+                placeholder={targets[i] ?? ""}
+                aria-label={`Repeticiones serie ${i + 1}${targets[i] ? `, objetivo ${targets[i]}` : ""}`}
+                className="field figure h-12 py-2.5 text-center text-lg" />
+            </label>
             <input type="number" inputMode="decimal" step="0.5" value={s.kg || ""}
               onChange={(e) => edit(i, "kg", +e.target.value)}
               aria-label={`Peso serie ${i + 1}`}
-              className="field figure py-2.5 text-center text-lg" />
+              className="field figure h-12 py-2.5 text-center text-lg" />
             <button onClick={() => checkSet(i)} aria-pressed={s.done} aria-label={`Marcar serie ${i + 1}`}
-              className="flex h-10 w-10 items-center justify-center">
+              className="flex h-12 w-10 items-center justify-center">
               <CheckDot on={s.done} size={28} />
             </button>
           </div>

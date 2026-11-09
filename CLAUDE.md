@@ -181,6 +181,23 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   pendiente de enviar). "Última sesión" es la última anterior a hoy. El botón
   final es "Siguiente ejercicio" (siguiente visible del día) o "Volver al
   entreno".
+- **Esquema de series** (`program_exercises.set_scheme`, texto): fuente
+  única `src/lib/scheme.ts`. Formato canónico: series separadas por "/" y
+  rango con guion dentro de cada una (`6-10/6-10/6-10/6-10`, `10/10/10/10`,
+  `8/8/6`); lo que no son series (cardio, calentamiento: "15 min") es texto
+  libre. `parseScheme` lee también lo antiguo (espacios, `4x10`, `4x6-10`,
+  `10-10-10-10` = 4 series; dos números con guion = rango de 1 serie).
+  `schemeSummary` ("4 series · 6-10 reps", cabecera del detalle) y
+  `schemeShort` ("4×6-10", listas de Entreno y del constructor). El
+  constructor usa `SchemeEditor` (tipo, series − N +, reps fijas/rango,
+  "Personalizar por serie", texto libre para cardio y calentamiento,
+  descanso) al añadir y al tocar una fila ya añadida; la fila muestra el
+  descanso como texto. En el detalle de ejercicio hay una fila por serie con
+  su objetivo encima del campo; las fijas vienen con su número, las de rango
+  con las reps de esa serie en la última sesión (o el mínimo), y un esquema
+  de texto da una sola fila. `supabase/convertir_esquemas.sql` (no es
+  migración, se aplica a mano una vez) pasa los 2 esquemas antiguos de la
+  base a canónico; la app los lee bien igualmente.
 - Programa activo: como mucho uno por clienta, vía RPC `set_active_program` (0008).
 - Medidas: definición única en `src/lib/measurements.ts` (formulario, ficha,
   Excel e informe); añadir una medida = tocar ese archivo + una migración.
@@ -357,6 +374,10 @@ NEXT_PUBLIC_REQUIRE_AUTH=false   # opcional: fuerza el modo demo
 - Fecha "de hoy" en hora local en toda la app (`src/lib/dates.ts`).
 - Bienvenida de 3 pantallas y aviso para instalar la app (requiere la 0016).
 - Paleta de la web de NEA (berenjena, rosa intenso y lila) en la app.
+- Franja berenjena tras la barra de estado en el tema claro de la app
+  instalada (`.status-bar-strip`: iOS pinta la hora en blanco).
+- Series y rangos de repeticiones en el constructor, editables tras añadir
+  (`src/lib/scheme.ts`, `SchemeEditor`).
 
 ## Pendientes conocidos
 - **Form-check**: la clienta sube vídeos de su ejecución para que la coach los
