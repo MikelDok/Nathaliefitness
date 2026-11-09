@@ -45,7 +45,7 @@ export default function CoachHeader() {
   }
 
   return (
-    <header className="border-b border-line print:hidden">
+    <header className="border-b border-line pt-[env(safe-area-inset-top)] print:hidden">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-4">
         <Link href="/coach" className="min-w-0">
           <span className="block font-display text-2xl font-bold uppercase leading-none tracking-[0.04em]">

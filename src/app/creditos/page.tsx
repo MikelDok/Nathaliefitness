@@ -26,7 +26,7 @@ function parse(md: string): Block[] {
 export default async function Creditos() {
   const md = await readFile(path.join(process.cwd(), "THIRD_PARTY_NOTICES.md"), "utf8");
   return (
-    <main className="mx-auto min-h-dvh max-w-md space-y-5 px-5 py-10">
+    <main className="mx-auto min-h-dvh max-w-md space-y-5 px-5 pb-10 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
       <div>
         <p className="eyebrow">Privacidad</p>
         <h1 className="mt-2 text-[32px]">Créditos</h1>

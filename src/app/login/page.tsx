@@ -31,7 +31,7 @@ export default function Login() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 pb-10 pt-[calc(env(safe-area-inset-top)+2.5rem)]">
       <div className="flex justify-center">
         <Image
           src="/logo.png"

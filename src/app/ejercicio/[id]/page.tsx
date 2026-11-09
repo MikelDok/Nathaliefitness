@@ -243,11 +243,11 @@ export default function Ejercicio({ params }: { params: Promise<{ id: string }> 
   }
 
   if (loading) {
-    return <main className="mx-auto max-w-md px-5 pt-6"><p className="text-sm text-muted">Cargando ejercicio…</p></main>;
+    return <main className="mx-auto max-w-md px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)]"><p className="text-sm text-muted">Cargando ejercicio…</p></main>;
   }
 
   return (
-    <main className="mx-auto max-w-md space-y-7 px-5 pb-56 pt-6">
+    <main className="mx-auto max-w-md space-y-7 px-5 pb-[calc(env(safe-area-inset-bottom)+14rem)] pt-[calc(env(safe-area-inset-top)+1.5rem)]">
       <PageHeader back="/entreno" title={name}
         right={zonesOf(muscle).length > 0
           ? <BodyMap view={viewOf(muscle)} size={120} highlighted={zonesOf(muscle)} />

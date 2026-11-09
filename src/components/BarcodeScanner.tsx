@@ -44,7 +44,8 @@ export default function BarcodeScanner({
   }, [onResult]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-bg/95 p-4 backdrop-blur">
+    <div className="fixed inset-0 z-50 flex flex-col bg-bg/95 p-4 backdrop-blur"
+      style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)", paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}>
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
         <p className="eyebrow text-center">Escanear código de barras</p>
         <div className="card mt-3 overflow-hidden">

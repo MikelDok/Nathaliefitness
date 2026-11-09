@@ -89,6 +89,15 @@ en femenino a la clienta ("tu entrenadora", "estás lista"…).
     paneles de progreso, `ThemeSwitcher`) ya usan el sistema nuevo.
   - `Ring`: 108 px, trazo 12, sin halo, accent (ok con `done`). Frase del día
     de Inicio en `src/lib/quotes.ts` (7, una por día de la semana).
+  **Zonas seguras (app instalada en iPhone)**: con `viewportFit: "cover"`
+  y la barra de estado `black-translucent`, la página empieza bajo la hora y
+  la batería. Todo contenedor que toque el borde superior suma
+  `env(safe-area-inset-top)` (`pt-[calc(env(safe-area-inset-top)+…)]`):
+  layout de pestañas, `CoachHeader`, detalle de ejercicio, login, recuperar,
+  nueva contraseña, privacidad, créditos, bienvenida y el escáner. Lo fijo
+  abajo (BottomNav, `RestTimer`, hoja de la guía) y el relleno inferior de
+  las pantallas suman `safe-area-inset-bottom`. Una pantalla nueva fuera de
+  esos layouts debe hacer lo mismo. En el navegador normal valen 0.
   Los títulos que reciben el foco por código (`h1[tabindex="-1"]`) no
   muestran anillo de foco.
 - **Supabase** (`@supabase/supabase-js` 2.112): Auth email+contraseña,
