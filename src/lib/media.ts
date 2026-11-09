@@ -86,6 +86,9 @@ export async function uploadMedia(
   const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const { error } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type });
-  if (error) return { error: "No se pudo subir el archivo. Inténtalo de nuevo." };
+  if (error) {
+    console.error(`[Media] No se pudo subir a ${bucket}:`, error);
+    return { error: "No se pudo subir el archivo. Inténtalo de nuevo." };
+  }
   return { path };
 }

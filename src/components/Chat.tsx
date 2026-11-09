@@ -11,6 +11,11 @@ import { ICON } from "@/components/ui";
 import { CHAT_BUCKET, MESSAGE_SELECT, messageTime, type ChatMessage } from "@/lib/chat";
 import { prepareMedia, uploadMedia } from "@/lib/media";
 
+/** Error real de Supabase en la consola (código, mensaje, detalle y pista). */
+function logError(what: string, e: { code?: string; message?: string; details?: string | null; hint?: string | null }) {
+  console.error(`[Chat] No se pudo ${what}:`, { code: e.code, message: e.message, details: e.details, hint: e.hint });
+}
+
 export default function Chat({ clientId }: { clientId: string }) {
   const [me, setMe] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -23,8 +28,9 @@ export default function Chat({ clientId }: { clientId: string }) {
   const load = useCallback(async (uid: string) => {
     const sb = getSupabase();
     if (!sb) { setLoading(false); return; }
-    const { data } = await sb.from("messages").select(MESSAGE_SELECT)
+    const { data, error } = await sb.from("messages").select(MESSAGE_SELECT)
       .eq("client_id", clientId).order("created_at");
+    if (error) logError("cargar los mensajes", error);
     const rows = (data as ChatMessage[]) || [];
 
     // URLs firmadas del bucket privado, igual que las fotos de progreso
@@ -40,7 +46,9 @@ export default function Chat({ clientId }: { clientId: string }) {
     // el chat está abierto: lo que me han enviado queda leído
     const unread = rows.filter((r) => r.sender_id !== uid && !r.read_at).map((r) => r.id);
     if (unread.length) {
-      await sb.from("messages").update({ read_at: new Date().toISOString() }).in("id", unread);
+      const { error: readErr } = await sb.from("messages")
+        .update({ read_at: new Date().toISOString() }).in("id", unread);
+      if (readErr) logError("marcar como leídos", readErr);
     }
   }, [clientId]);
 
@@ -87,7 +95,12 @@ export default function Chat({ clientId }: { clientId: string }) {
       client_id: clientId, sender_id: me, kind: "text", body: t,
     });
     setBusy(false);
-    if (error) { setErr("No se pudo enviar el mensaje."); return; }
+    if (error) {
+      // el texto se queda en el campo para reintentar; el error real, a la consola
+      logError("enviar mensaje", error);
+      setErr("No se pudo enviar el mensaje. Tu texto sigue escrito: inténtalo de nuevo.");
+      return;
+    }
     setText("");
     load(me);
   }
@@ -106,6 +119,7 @@ export default function Chat({ clientId }: { clientId: string }) {
       storage_path: up.path, body: text.trim() || null,
     });
     if (error) {
+      logError("enviar archivo", error);
       // sin mensaje que lo referencie, el fichero sobra en el bucket
       await sb.storage.from(CHAT_BUCKET).remove([up.path]);
       setBusy(false); setErr("No se pudo enviar el archivo.");

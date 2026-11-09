@@ -163,7 +163,8 @@ supabase/migrations/     SQL numerado, se ejecuta a mano en el SQL Editor
   como en el bucket `progress-photos` (0005). No relajar nunca esta regla.
 - **Hilos por `client_id`**: chat (`messages`) y citas (`appointments`) no tienen
   tabla de conversación; el hilo ES la clienta y la coach se deriva de
-  `profiles.coach_id`. Ficheros del chat en el bucket privado `chat-media`,
+  `profiles.coach_id`. Si falla un envío, el texto se queda en el campo y el
+  error real de Supabase va a la consola (`[Chat]`). Ficheros del chat en el bucket privado `chat-media`,
   carpeta `{client_id}/…`, controlados por `in_chat_thread()`.
 - Citas: no se borran (sin policy de delete); se cancelan con `status`.
 - Registro de series (`exercise_logs`): **un registro por clienta, ejercicio
@@ -297,8 +298,16 @@ re-ejecutables (`if not exists`, `drop policy if exists`, `on conflict`).
 | 0014 | Planes de comida por semanas: `meal_plans.weeks` (1-4), `meal_plans.starts_on`, `meals.week` |
 | 0015 | Un registro por clienta, ejercicio y día en `exercise_logs` (borra duplicados previos conservando el más reciente + índice único) |
 | 0016 | `profiles.onboarded_at` (bienvenida vista) + `grant update (onboarded_at)` |
+| 0017 | Reaplica la seguridad de `messages` de la 0010 (en producción quedó sin policies: el chat no enviaba) |
 
-**La siguiente es `0017_…`.**
+**La siguiente es `0018_…`.**
+
+**Diagnóstico de escrituras**: `supabase/diagnostico_escrituras.sql` (no es
+una migración). Pegado en el SQL Editor, hace cada escritura de la app como
+la clienta de prueba y como su coach (RLS, permisos de columna, triggers
+reales), deshace todo y devuelve una tabla OK/FALLA con el código de error.
+Úsalo tras aplicar una migración o si algo "no se guarda". Si se añade una
+escritura nueva a la app, añádela también ahí.
 
 ## Variables de entorno (`.env.local`, y las mismas en Vercel)
 ```
